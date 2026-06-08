@@ -3,96 +3,89 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>モールス和文・いろは順 Ver1.25</title>
+<title>モールス和文・いろは順 Ver1.26</title>
 <style>
 :root{--bg:#f1f5f9;--card:#fff;--ink:#0f172a;--muted:#64748b;--accent:#2563eb;--accent-2:#dc2626}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif}
-.container{max-width:1100px;margin:0 auto;padding:0 16px 48px}
-h1{font-size:26px;margin:14px 0 10px}
-.badge{font-size:13px;color:var(--muted);background:#e2e8f0;padding:3px 8px;border-radius:999px;margin-left:8px}
-.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;background:var(--card);padding:12px;border:1px solid #e2e8f0;border-radius:14px;margin:16px 0 20px;position:sticky;top:0;z-index:10;box-shadow:0 2px 8px rgba(0,0,0,.04)}
-.controls label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
-.controls input[type=number],.controls select{padding:8px 10px;border:1px solid #cbd5e1;border-radius:10px;font-size:14px;background:#fff}
-.btn{appearance:none;border:1px solid #cbd5e1;background:#fff;color:var(--ink);padding:8px 14px;border-radius:10px;font-size:14px;cursor:pointer}
-.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
-.btn.danger{background:#fff;border-color:#fecaca;color:var(--accent-2)}
-#nowPlaying{min-width:140px;text-align:center;padding:8px 12px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;font-family:ui-monospace,monospace}
-.iroha-row{display:flex;gap:14px;align-items:flex-start;background:var(--card);border:1px solid #e2e8f0;border-radius:14px;padding:14px;margin-bottom:14px}
-.row-control{width:170px;flex:none}
+.container{max-width:1100px;margin:0 auto;padding:0 12px 48px}
+h1{font-size:24px;margin:12px 0 8px}
+.badge{font-size:12px;color:var(--muted);background:#e2e8f0;padding:2px 8px;border-radius:999px;margin-left:6px}
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;background:var(--card);padding:10px;border:1px solid #e2e8f0;border-radius:12px;margin:12px 0 16px;position:sticky;top:0;z-index:10}
+.controls label{display:block;font-size:11px;color:var(--muted);margin-bottom:3px}
+.controls input,.controls select{padding:7px 8px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px}
+.btn{border:1px solid #cbd5e1;background:#fff;padding:7px 12px;border-radius:8px;cursor:pointer}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn.danger{color:var(--accent-2);border-color:#fecaca}
+#nowPlaying{min-width:120px;text-align:center;padding:6px 8px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;font-family:monospace;font-size:13px}
+.iroha-row{background:var(--card);border:1px solid #e2e8f0;border-radius:12px;padding:10px;margin-bottom:12px}
 .row-title{font-weight:700;margin-bottom:8px}
-.cards{display:flex;flex-wrap:wrap;gap:10px;flex:1}
-.card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:10px 8px;text-align:center;flex:0 0 108px;transition:.15s}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:8px}
+.card{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:8px 4px;text-align:center}
 .card.playing{box-shadow:inset 0 0 0 2px var(--accent);background:#e0ecff}
-.char{font-size:22px;font-weight:700;margin-bottom:4px;display:flex;justify-content:center;align-items:baseline;gap:6px}
-.kana{font-size:22px}
-.latin{font-size:13px;color:var(--muted);font-weight:500}
-.code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:13px;color:#334155;min-height:20px}
-.btn-replay{margin-top:6px;font-size:12px;padding:5px 0;width:100%;border:1px solid #e2e8f0;background:#f8fafc;border-radius:8px;cursor:pointer}
-footer{margin-top:20px;color:var(--muted);font-size:12px}
-@media(max-width:720px){.iroha-row{flex-direction:column}.row-control{width:100%}.cards{overflow-x:auto;flex-wrap:nowrap}.card{flex:0 0 80px}}
+.kana{font-size:20px;font-weight:700}
+.latin{font-size:12px;color:var(--muted);margin-left:3px}
+.code{font-family:monospace;font-size:12px;color:#334155;min-height:18px}
+.btn-replay{margin-top:4px;width:100%;padding:4px;font-size:11px;border:1px solid #e2e8f0;background:#f8fafc;border-radius:6px}
+@media(min-width:700px){.cards{grid-template-columns:repeat(auto-fill,minmax(100px,1fr))}}
 </style>
 </head>
 <body>
 <div class="container">
-<h1>モールス和文・いろは順 <span class="badge">Ver1.25</span></h1>
+<h1>モールス和文・いろは順 <span class="badge">Ver1.26</span></h1>
 <div class="controls">
-<div><label>速度 WPM</label><input id="wpm" type="number" min="5" max="40" value="18" style="width:72px"></div>
-<div><label>周波数 Hz</label><input id="freq" type="number" min="300" max="1200" value="750" step="10" style="width:84px"></div>
-<div><label>文字間隔</label><select id="spacing"><option value="1">標準</option><option value="2">標準×2</option><option value="3" selected>標準×3</option><option value="4">標準×4</option><option value="5">標準×5</option></select></div>
-<div><label>再生間隔 秒</label><input id="interval" type="number" min="0.5" max="5" step="0.1" value="1.2" style="width:72px"></div>
-<div><label>再生順</label><div style="display:flex;align-items:center;gap:10px;height:34px"><label style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="seqMode">左端から順に</label><span id="modeStatus" style="font-size:11px;padding:2px 6px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:6px">ランダム</span></div></div>
-<div><label>&nbsp;</label><label style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="checkAll">すべてにチェック</label></div>
-<div><label>&nbsp;</label><button id="autoToggle" class="btn primary">開始</button> <button id="stopAll" class="btn danger">停止</button> <span id="nowPlaying">―</span></div>
+<div><label>WPM</label><input id="wpm" type="number" value="18" style="width:60px"></div>
+<div><label>Hz</label><input id="freq" type="number" value="750" style="width:70px"></div>
+<div><label>間隔</label><select id="spacing"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select></div>
+<div><label>秒</label><input id="interval" type="number" value="1.2" step="0.1" style="width:55px"></div>
+<div><label><input type="checkbox" id="seqMode">順に</label></div>
+<div><label><input type="checkbox" id="checkAll">全チェック</label></div>
+<div><button id="autoToggle" class="btn primary">開始</button> <button id="stopAll" class="btn danger">停止</button> <span id="nowPlaying">―</span></div>
 </div>
 <div id="rows"></div>
-<div><h2 style="font-size:17px;margin:22px 0 10px">濁点・半濁点</h2><div class="cards" id="dakuten"></div></div>
-<footer>和文モールス学習用 Ver1.25（カタカナ＋英字併記）</footer>
+<h2 style="font-size:16px;margin:16px 0 8px">濁点・半濁点</h2><div class="cards" id="dakuten"></div>
 </div>
 <script>
 const rowsData=[
-{id:1,label:'イロハニホヘト',chars:[{k:'イ',c:'・－'},{k:'ロ',c:'・－・－'},{k:'ハ',c:'－・・・'},{k:'ニ',c:'－・－・'},{k:'ホ',c:'－・・'},{k:'ヘ',c:'・'},{k:'ト',c:'・・－・・'}]},
-{id:2,label:'チリヌルヲ',chars:[{k:'チ',c:'・・－・'},{k:'リ',c:'－－・'},{k:'ヌ',c:'・・・・'},{k:'ル',c:'－・－－・'},{k:'ヲ',c:'・－－－'}]},
-{id:3,label:'ワカヨタレソ',chars:[{k:'ワ',c:'－・－'},{k:'カ',c:'・－・・'},{k:'ヨ',c:'－－'},{k:'タ',c:'－・'},{k:'レ',c:'－－－'},{k:'ソ',c:'－－－・'}]},
-{id:4,label:'ツネナラム',chars:[{k:'ツ',c:'・－・'},{k:'ネ',c:'－－・－'},{k:'ナ',c:'・－・'},{k:'ラ',c:'・・・'},{k:'ム',c:'－'}]},
-{id:5,label:'ウヰノオクヤマ',chars:[{k:'ウ',c:'・・－'},{k:'ヰ',c:'・－・・－'},{k:'ノ',c:'・・－－'},{k:'オ',c:'・－・・・'},{k:'ク',c:'・・・－'},{k:'ヤ',c:'・－－'},{k:'マ',c:'－・・－'}]},
-{id:6,label:'ケフコエテ',chars:[{k:'ケ',c:'－・－－'},{k:'フ',c:'－－・・'},{k:'コ',c:'－－－－'},{k:'エ',c:'－・－－－'},{k:'テ',c:'・－・－－'}]},
-{id:7,label:'アサキユメミシ',chars:[{k:'ア',c:'－－・－－'},{k:'サ',c:'－・－・－'},{k:'キ',c:'－・－・・'},{k:'ユ',c:'－・・－－'},{k:'メ',c:'－・・・－'},{k:'ミ',c:'・・－・－'},{k:'シ',c:'－－・－・'}]},
-{id:8,label:'ヱヒモセス',chars:[{k:'ヱ',c:'・－－・・'},{k:'ヒ',c:'－－・・－'},{k:'モ',c:'－・・－・'},{k:'セ',c:'・－－－・'},{k:'ス',c:'－－－・－'}]},
-{id:9,label:'ン',chars:[{k:'ン',c:'・－・－・'}]}
+{id:1,label:'1列 イロハニホヘト',chars:[{k:'イ',c:'・－'},{k:'ロ',c:'・－・－'},{k:'ハ',c:'－・・・'},{k:'ニ',c:'－・－・'},{k:'ホ',c:'－・・'},{k:'ヘ',c:'・'},{k:'ト',c:'・・－・・'}]},
+{id:2,label:'2列 チリヌルヲ',chars:[{k:'チ',c:'・・－・'},{k:'リ',c:'－－・'},{k:'ヌ',c:'・・・・'},{k:'ル',c:'－・－－・'},{k:'ヲ',c:'・－－－'}]},
+{id:3,label:'3列 ワカヨタレソ',chars:[{k:'ワ',c:'－・－'},{k:'カ',c:'・－・・'},{k:'ヨ',c:'－－'},{k:'タ',c:'－・'},{k:'レ',c:'－－－'},{k:'ソ',c:'－－－・'}]},
+{id:4,label:'4列 ツネナラム',chars:[{k:'ツ',c:'・－・'},{k:'ネ',c:'－－・－'},{k:'ナ',c:'・－・'},{k:'ラ',c:'・・・'},{k:'ム',c:'－'}]},
+{id:5,label:'5列 ウヰノオクヤマ',chars:[{k:'ウ',c:'・・－'},{k:'ヰ',c:'・－・・－'},{k:'ノ',c:'・・－－'},{k:'オ',c:'・－・・・'},{k:'ク',c:'・・・－'},{k:'ヤ',c:'・－－'},{k:'マ',c:'－・・－'}]},
+{id:6,label:'6列 ケフコエテ',chars:[{k:'ケ',c:'－・－－'},{k:'フ',c:'－－・・'},{k:'コ',c:'－－－－'},{k:'エ',c:'－・－－－'},{k:'テ',c:'・－・－－'}]},
+{id:7,label:'7列 アサキユメミシ',chars:[{k:'ア',c:'－－・－－'},{k:'サ',c:'－・－・－'},{k:'キ',c:'－・－・・'},{k:'ユ',c:'－・・－－'},{k:'メ',c:'－・・・－'},{k:'ミ',c:'・・－・－'},{k:'シ',c:'－－・－・'}]},
+{id:8,label:'8列 ヱヒモセス',chars:[{k:'ヱ',c:'・－－・・'},{k:'ヒ',c:'－－・・－'},{k:'モ',c:'－・・－・'},{k:'セ',c:'・－－－・'},{k:'ス',c:'－－－・－'}]},
+{id:9,label:'9列 ン',chars:[{k:'ン',c:'・－・－・'}]}
 ];
-const codeToLatin={'・－':'A','－・・・':'B','－・－・':'C','－・・':'D','・':'E','・・－・':'F','－－・':'G','・・・・':'H','・・':'I','・－－－':'J','－・－':'K','・－・・':'L','－－':'M','－・':'N','－－－':'O','・－－・':'P','－－・－':'Q','・－・':'R','・・・':'S','－':'T','・・－':'U','・・・－':'V','・－－':'W','－・・－':'X','－・－－':'Y','－－・・':'Z'};
-const dakuten=[{k:'濁点',c:'・・'},{k:'半濁点',c:'・・－－・'}];
+const map={'・－':'A','－・・・':'B','－・－・':'C','－・・':'D','・':'E','・・－・':'F','－－・':'G','・・・・':'H','・・':'I','・－－－':'J','－・－':'K','・－・・':'L','－－':'M','－・':'N','－－－':'O','・－－・':'P','－－・－':'Q','・－・':'R','・・・':'S','－':'T','・・－':'U','・・・－':'V','・－－':'W','－・・－':'X','－・－－':'Y','－－・・':'Z'};
 const rowsWrap=document.getElementById('rows');
-rowsData.forEach(row=>{
-  const el=document.createElement('div');el.className='iroha-row';
-  el.innerHTML=`<div class="row-control"><div class="row-title"><label><input type="checkbox" data-row="${row.id}"> ${row.id}列 ${row.label}</label></div></div><div class="cards"></div>`;
-  const cards=el.querySelector('.cards');
-  row.chars.forEach(ch=>{
-    const latin=codeToLatin[ch.c]||'';
-    const card=document.createElement('div');card.className='card';card.dataset.kana=ch.k;card.dataset.code=ch.c;
-    card.innerHTML=`<div class="char"><span class="kana">${ch.k}</span>${latin?`<span class="latin">${latin}</span>`:''}</div><div class="code">${ch.c}</div><button class="btn-replay">再生</button>`;
-    card.querySelector('.btn-replay').onclick=()=>playChar(ch,card);
-    cards.appendChild(card);
+rowsData.forEach(r=>{
+  const d=document.createElement('div');d.className='iroha-row';
+  d.innerHTML=`<div class="row-title"><label><input type="checkbox" data-r="${r.id}"> ${r.label}</label></div><div class="cards"></div>`;
+  const c=d.querySelector('.cards');
+  r.chars.forEach(o=>{
+    const card=document.createElement('div');card.className='card';card.dataset.k=o.k;
+    card.innerHTML=`<div><span class="kana">${o.k}</span><span class="latin">${map[o.c]||''}</span></div><div class="code">${o.c}</div><button class="btn-replay">再生</button>`;
+    card.querySelector('button').onclick=()=>play(o,card);
+    c.appendChild(card);
   });
-  rowsWrap.appendChild(el);
+  rowsWrap.appendChild(d);
 });
+const dakuten=[{k:'濁点',c:'・・'},{k:'半濁点',c:'・・－－・'}];
 const dk=document.getElementById('dakuten');
-dakuten.forEach(d=>{const c=document.createElement('div');c.className='card';c.dataset.kana=d.k;c.dataset.code=d.c;c.innerHTML=`<div class="char"><span class="kana">${d.k}</span></div><div class="code">${d.c}</div><button class="btn-replay">再生</button>`;c.querySelector('button').onclick=()=>playChar(d,c);dk.appendChild(c)});
+dakuten.forEach(o=>{const card=document.createElement('div');card.className='card';card.innerHTML=`<div class="kana">${o.k}</div><div class="code">${o.c}</div><button class="btn-replay">再生</button>`;card.querySelector('button').onclick=()=>play(o,card);dk.appendChild(card)});
 
-let ctx=null,active=new Set(),auto=false,timer=null,seq=0;
-async function ensure(){if(!ctx)ctx=new(window.AudioContext||window.webkitAudioContext)();if(ctx.state==='suspended')await ctx.resume();}
-function settings(){return{w:+wpm.value||18,f:+freq.value||750,s:+spacing.value||3};}
-const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-async function playCode(code,f,w,s){await ensure();const dot=1.2/w;let t=ctx.currentTime+0.05;const o=ctx.createOscillator(),g=ctx.createGain();o.type='sine';o.frequency.value=f;g.gain.value=0;o.connect(g).connect(ctx.destination);o.start(t);active.add(o);for(const ch of code){if(ch!=='・'&&ch!=='－')continue;const dur=ch==='・'?dot:dot*3;g.gain.setValueAtTime(0.9,t);g.gain.setValueAtTime(0.9,t+dur-0.003);g.gain.linearRampToValueAtTime(0,t+dur);t+=dur+dot;}t+=dot*2*s;o.stop(t);o.onended=()=>active.delete(o);return(t-ctx.currentTime)*1000;}
-async function playChar(ch,card){document.getElementById('nowPlaying').textContent=`${ch.k} ${ch.c}`;card&&card.classList.add('playing');const st=settings();await sleep(await playCode(ch.c,st.f,st.w,st.s));card&&card.classList.remove('playing');}
-function stopAll(){active.forEach(o=>{try{o.stop()}catch{}});active.clear();document.getElementById('nowPlaying').textContent='―';document.querySelectorAll('.playing').forEach(c=>c.classList.remove('playing'));}
-function pool(){return[...document.querySelectorAll('input[data-row]:checked')].flatMap(cb=>rowsData.find(r=>r.id==cb.dataset.row).chars);}
-async function loop(){if(!auto)return;const p=pool();if(!p.length)return timer=setTimeout(loop,500);const pick=seqMode.checked?p[seq++%p.length]:p[Math.random()*p.length|0];const card=[...document.querySelectorAll('.card')].find(c=>c.dataset.kana===pick.k);await playChar(pick,card);timer=setTimeout(loop,(+interval.value||1.2)*1000);}
-autoToggle.onclick=async()=>{await ensure();auto=!auto;autoToggle.textContent=auto?'停止':'開始';if(auto){seq=0;loop()}else clearTimeout(timer)};
-stopAll.onclick=()=>{auto=false;clearTimeout(timer);autoToggle.textContent='開始';stopAll();};
-seqMode.onchange=e=>modeStatus.textContent=e.target.checked?'順次':'ランダム';
-checkAll.onchange=e=>document.querySelectorAll('input[data-row]').forEach(cb=>cb.checked=e.target.checked);
+let ctx,auto=false,timer,seq=0,active=new Set();
+async function ac(){if(!ctx)ctx=new AudioContext();if(ctx.state=='suspended')await ctx.resume();}
+function gs(){return{w:+wpm.value,f:+freq.value,s:+spacing.value};}
+const sleep=m=>new Promise(r=>setTimeout(r,m));
+async function pc(code,f,w,s){await ac();const d=1.2/w;let t=ctx.currentTime+0.05;const o=ctx.createOscillator(),g=ctx.createGain();o.frequency.value=f;g.gain.value=0;o.connect(g).connect(ctx.destination);o.start(t);active.add(o);for(const ch of code){if(ch!=='・'&&ch!=='－')continue;const du=ch==='・'?d:d*3;g.gain.setValueAtTime(.8,t);g.gain.setValueAtTime(.8,t+du-.002);g.gain.linearRampToValueAtTime(0,t+du);t+=du+d;}o.stop(t+d*s*2);o.onended=()=>active.delete(o);return(t-ctx.currentTime)*1000;}
+async function play(o,card){nowPlaying.textContent=`${o.k} ${o.c}`;card&&card.classList.add('playing');const s=gs();await sleep(await pc(o.c,s.f,s.w,s.s));card&&card.classList.remove('playing');}
+function pool(){return[...document.querySelectorAll('[data-r]:checked')].flatMap(cb=>rowsData.find(r=>r.id==cb.dataset.r).chars);}
+async function loop(){if(!auto)return;const p=pool();if(!p.length)return timer=setTimeout(loop,500);const o=seqMode.checked?p[seq++%p.length]:p[Math.random()*p.length|0];const card=[...document.querySelectorAll('.card')].find(x=>x.querySelector('.kana')?.textContent===o.k);await play(o,card);timer=setTimeout(loop,interval.value*1000);}
+autoToggle.onclick=async()=>{await ac();auto=!auto;autoToggle.textContent=auto?'停止':'開始';if(auto){seq=0;loop()}else clearTimeout(timer);};
+stopAll.onclick=()=>{auto=false;clearTimeout(timer);autoToggle.textContent='開始';nowPlaying.textContent='―';active.forEach(o=>{try{o.stop()}catch{}});};
+checkAll.onchange=e=>document.querySelectorAll('[data-r]').forEach(c=>c.checked=e.target.checked);
 </script>
 </body>
 </html>
