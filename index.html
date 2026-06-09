@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>モールス和文・いろは順 Ver1.27c</title>
+<title>モールス和文・いろは順 Ver1.27d</title>
 <style>
-:root{--bg:#f1f5f9;--card:#fff;--ink:#0f172a;--muted:#64748b;--accent:#2563eb;--accent-2:#dc2626}
+:root{--bg:#f1f5f9;--card:#fff;--ink:#0f172a;--muted:#64748b;--accent:#2563eb}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif}
 .container{max-width:1100px;margin:0 auto;padding:0 12px 48px}
@@ -17,7 +17,6 @@ label.small{font-size:11px;color:var(--muted);display:block;margin-bottom:2px}
 input,select{padding:6px 8px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px}
 .btn{border:1px solid #cbd5e1;background:#fff;padding:6px 10px;border-radius:8px;cursor:pointer;font-size:13px}
 .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
-.btn.danger{color:var(--accent-2);border-color:#fecaca}
 .btn.active{background:#e0ecff;border-color:var(--accent)}
 #nowPlaying{min-width:110px;text-align:center;padding:5px 8px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;font-family:monospace;font-size:12px}
 .iroha-row{background:var(--card);border:1px solid #e2e8f0;border-radius:12px;padding:10px;margin-bottom:12px}
@@ -35,7 +34,7 @@ input,select{padding:6px 8px;border:1px solid #cbd5e1;border-radius:8px;font-siz
 </head>
 <body>
 <div class="container">
-<h1>モールス和文・いろは順 <span class="badge">Ver1.27c</span></h1>
+<h1>モールス和文・いろは順 <span class="badge">Ver1.27d</span></h1>
 
 <div class="panel">
 <div class="row">
@@ -69,7 +68,7 @@ input,select{padding:6px 8px;border:1px solid #cbd5e1;border-radius:8px;font-siz
 <div class="row">
 <button id="autoToggle" class="btn primary">開始</button>
 <span id="nowPlaying">―</span>
-<label style="margin-left:auto"><input type="checkbox" id="checkAll" checked>全チェック</label>
+<label style="margin-left:auto"><input type="checkbox" id="checkAll">全チェック</label>
 </div>
 </div>
 
@@ -113,13 +112,14 @@ async function playItem(o,card){await ac();nowPlaying.textContent=`${o.k} ${o.c}
 function pool(){return[...document.querySelectorAll('[data-r]:checked')].flatMap(cb=>rowsData.find(r=>r.id==cb.dataset.r).chars);}
 function updateCounter(){counter.textContent=`${count} / ${goal?goal:'-'}`;}
 function isSeq(){return document.querySelector('input[name="mode"]:checked').value==='seq';}
-async function loop(){if(!auto)return;const p=pool();if(!p.length){auto=false;return;}let pick;if(isSeq()){pick=p[seq++%p.length];}else{let tries=0;do{pick=p[Math.random()*p.length|0];tries++;}while(noRepeat.checked&&p.length>1&&pick.k===lastK&&tries<10);}lastK=pick.k;const card=[...document.querySelectorAll('.card')].find(x=>x.querySelector('.kana')?.textContent===pick.k);await playItem(pick,card);count++;updateCounter();if(goal&&count>=goal){auto=false;autoToggle.textContent='開始';nowPlaying.textContent='達成！';return;}timer=setTimeout(loop,interval.value*1000);}
+async function loop(){if(!auto)return;const p=pool();if(!p.length){auto=false;autoToggle.textContent='開始';return;}let pick;if(isSeq()){pick=p[seq++%p.length];}else{let tries=0;do{pick=p[Math.random()*p.length|0];tries++;}while(noRepeat.checked&&p.length>1&&pick.k===lastK&&tries<10);}lastK=pick.k;const card=[...document.querySelectorAll('.card')].find(x=>x.querySelector('.kana')?.textContent===pick.k);await playItem(pick,card);count++;updateCounter();if(goal&&count>=goal){auto=false;autoToggle.textContent='開始';nowPlaying.textContent='達成！';return;}timer=setTimeout(loop,interval.value*1000);}
 autoToggle.onclick=async()=>{await ac();auto=!auto;autoToggle.textContent=auto?'停止':'開始';if(auto){count=0;seq=0;lastK=null;updateCounter();loop()}else{clearTimeout(timer);nowPlaying.textContent='―';active.forEach(o=>{try{o.stop()}catch{}});}};
-
 const checkAll=document.getElementById('checkAll');
-function syncCheckAll(){const all=[...document.querySelectorAll('[data-r]')];checkAll.checked=all.every(c=>c.checked);}
+function syncCheckAll(){const all=[...document.querySelectorAll('[data-r]')];checkAll.checked=all.length>0 && all.every(c=>c.checked);}
 checkAll.onchange=e=>{document.querySelectorAll('[data-r]').forEach(c=>c.checked=e.target.checked);};
 document.addEventListener('change',e=>{if(e.target.matches('[data-r]'))syncCheckAll();});
+// 初期化：全列チェック後に全チェックを同期
+window.addEventListener('DOMContentLoaded',()=>{document.querySelectorAll('[data-r]').forEach(c=>c.checked=true);syncCheckAll();});
 syncCheckAll();
 document.querySelectorAll('.repeatBtn').forEach(b=>b.onclick=()=>{document.querySelectorAll('.repeatBtn').forEach(x=>x.classList.remove('active'));b.classList.add('active');repeat=+b.dataset.r;});
 document.querySelectorAll('.goalBtn').forEach(b=>b.onclick=()=>{document.querySelectorAll('.goalBtn').forEach(x=>x.classList.remove('active'));b.classList.add('active');goal=+b.dataset.g;updateCounter();});
