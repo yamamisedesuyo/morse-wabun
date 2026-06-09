@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>モールス和文・いろは順 Ver1.27</title>
+<title>モールス和文・いろは順 Ver1.27c</title>
 <style>
 :root{--bg:#f1f5f9;--card:#fff;--ink:#0f172a;--muted:#64748b;--accent:#2563eb;--accent-2:#dc2626}
 *{box-sizing:border-box}
@@ -12,7 +12,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple
 h1{font-size:22px;margin:12px 0 8px}
 .badge{font-size:12px;color:var(--muted);background:#e2e8f0;padding:2px 8px;border-radius:999px;margin-left:6px}
 .panel{background:var(--card);border:1px solid #e2e8f0;border-radius:12px;padding:10px;margin:12px 0}
-.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:6px 0}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:6px 0}
 label.small{font-size:11px;color:var(--muted);display:block;margin-bottom:2px}
 input,select{padding:6px 8px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px}
 .btn{border:1px solid #cbd5e1;background:#fff;padding:6px 10px;border-radius:8px;cursor:pointer;font-size:13px}
@@ -30,11 +30,12 @@ input,select{padding:6px 8px;border:1px solid #cbd5e1;border-radius:8px;font-siz
 .code{font-family:monospace;font-size:12px;color:#334155;min-height:18px}
 .btn-replay{margin-top:4px;width:100%;padding:4px;font-size:11px;border:1px solid #e2e8f0;background:#f8fafc;border-radius:6px}
 .status{font-size:12px;color:var(--muted);margin-left:8px}
+.radio-group{display:flex;gap:12px;align-items:center;font-size:13px}
 </style>
 </head>
 <body>
 <div class="container">
-<h1>モールス和文・いろは順 <span class="badge">Ver1.27</span></h1>
+<h1>モールス和文・いろは順 <span class="badge">Ver1.27c</span></h1>
 
 <div class="panel">
 <div class="row">
@@ -42,8 +43,14 @@ input,select{padding:6px 8px;border:1px solid #cbd5e1;border-radius:8px;font-siz
 <div><label class="small">Hz</label><input id="freq" type="number" value="750" style="width:68px"></div>
 <div><label class="small">間隔</label><select id="spacing"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select></div>
 <div><label class="small">秒</label><input id="interval" type="number" value="1.2" step="0.1" style="width:55px"></div>
-<div><label class="small">&nbsp;</label><label><input type="checkbox" id="seqMode">順に</label></div>
-<div><label class="small">&nbsp;</label><label><input type="checkbox" id="noRepeat" checked>同じ字を続けない</label></div>
+</div>
+<div class="row">
+<div class="radio-group">
+<span style="color:var(--muted)">再生順:</span>
+<label><input type="radio" name="mode" value="random" checked> ランダム</label>
+<label><input type="radio" name="mode" value="seq"> いろは順</label>
+<label style="margin-left:8px"><input type="checkbox" id="noRepeat" checked> 同じ字を続けない</label>
+</div>
 </div>
 <div class="row">
 <span style="font-size:12px;color:var(--muted)">リピート:</span>
@@ -61,9 +68,8 @@ input,select{padding:6px 8px;border:1px solid #cbd5e1;border-radius:8px;font-siz
 </div>
 <div class="row">
 <button id="autoToggle" class="btn primary">開始</button>
-<button id="stopAll" class="btn danger">停止</button>
 <span id="nowPlaying">―</span>
-<label style="margin-left:auto"><input type="checkbox" id="checkAll">全チェック</label>
+<label style="margin-left:auto"><input type="checkbox" id="checkAll" checked>全チェック</label>
 </div>
 </div>
 
@@ -106,10 +112,15 @@ async function playCode(code,f,w){const d=1.2/w;let t=ctx.currentTime+0.05;const
 async function playItem(o,card){await ac();nowPlaying.textContent=`${o.k} ${o.c}`;card&&card.classList.add('playing');const f=+freq.value,w=+wpm.value,s=+spacing.value;for(let i=0;i<repeat;i++){await sleep(await playCode(o.c,f,w));if(i<repeat-1)await sleep(1200/w*s);}card&&card.classList.remove('playing');}
 function pool(){return[...document.querySelectorAll('[data-r]:checked')].flatMap(cb=>rowsData.find(r=>r.id==cb.dataset.r).chars);}
 function updateCounter(){counter.textContent=`${count} / ${goal?goal:'-'}`;}
-async function loop(){if(!auto)return;const p=pool();if(!p.length){auto=false;return;}let pick;if(seqMode.checked){pick=p[seq++%p.length];}else{let tries=0;do{pick=p[Math.random()*p.length|0];tries++;}while(noRepeat.checked&&p.length>1&&pick.k===lastK&&tries<10);}lastK=pick.k;const card=[...document.querySelectorAll('.card')].find(x=>x.querySelector('.kana')?.textContent===pick.k);await playItem(pick,card);count++;updateCounter();if(goal&&count>=goal){auto=false;autoToggle.textContent='開始';nowPlaying.textContent='達成！';return;}timer=setTimeout(loop,interval.value*1000);}
-autoToggle.onclick=async()=>{await ac();auto=!auto;autoToggle.textContent=auto?'停止':'開始';if(auto){count=0;seq=0;lastK=null;updateCounter();loop()}else clearTimeout(timer);};
-stopAll.onclick=()=>{auto=false;clearTimeout(timer);autoToggle.textContent='開始';nowPlaying.textContent='―';active.forEach(o=>{try{o.stop()}catch{}});};
-checkAll.onchange=e=>document.querySelectorAll('[data-r]').forEach(c=>c.checked=e.target.checked);
+function isSeq(){return document.querySelector('input[name="mode"]:checked').value==='seq';}
+async function loop(){if(!auto)return;const p=pool();if(!p.length){auto=false;return;}let pick;if(isSeq()){pick=p[seq++%p.length];}else{let tries=0;do{pick=p[Math.random()*p.length|0];tries++;}while(noRepeat.checked&&p.length>1&&pick.k===lastK&&tries<10);}lastK=pick.k;const card=[...document.querySelectorAll('.card')].find(x=>x.querySelector('.kana')?.textContent===pick.k);await playItem(pick,card);count++;updateCounter();if(goal&&count>=goal){auto=false;autoToggle.textContent='開始';nowPlaying.textContent='達成！';return;}timer=setTimeout(loop,interval.value*1000);}
+autoToggle.onclick=async()=>{await ac();auto=!auto;autoToggle.textContent=auto?'停止':'開始';if(auto){count=0;seq=0;lastK=null;updateCounter();loop()}else{clearTimeout(timer);nowPlaying.textContent='―';active.forEach(o=>{try{o.stop()}catch{}});}};
+
+const checkAll=document.getElementById('checkAll');
+function syncCheckAll(){const all=[...document.querySelectorAll('[data-r]')];checkAll.checked=all.every(c=>c.checked);}
+checkAll.onchange=e=>{document.querySelectorAll('[data-r]').forEach(c=>c.checked=e.target.checked);};
+document.addEventListener('change',e=>{if(e.target.matches('[data-r]'))syncCheckAll();});
+syncCheckAll();
 document.querySelectorAll('.repeatBtn').forEach(b=>b.onclick=()=>{document.querySelectorAll('.repeatBtn').forEach(x=>x.classList.remove('active'));b.classList.add('active');repeat=+b.dataset.r;});
 document.querySelectorAll('.goalBtn').forEach(b=>b.onclick=()=>{document.querySelectorAll('.goalBtn').forEach(x=>x.classList.remove('active'));b.classList.add('active');goal=+b.dataset.g;updateCounter();});
 updateCounter();
