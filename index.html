@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>モールス和文・いろは順 Ver1.28e</title>
+<title>モールス和文・いろは順 Ver1.28f</title>
 <style>
 :root{--bg:#f1f5f9;--card:#fff;--ink:#0f172a;--muted:#64748b;--accent:#2563eb}
 *{box-sizing:border-box}
@@ -35,7 +35,7 @@ input,select{padding:6px 8px;border:1px solid #cbd5e1;border-radius:8px;font-siz
 </head>
 <body>
 <div class="container">
-<h1>モールス和文・いろは順 <span class="badge">Ver1.28e</span></h1>
+<h1>モールス和文・いろは順 <span class="badge">Ver1.28f</span></h1>
 <div class="panel">
 <div class="row"><div><label class="small">WPM</label><input id="wpm" type="number" value="18" style="width:60px"></div><div><label class="small">Hz</label><input id="freq" type="number" value="750" style="width:68px"></div><div><label class="small">文字間隔</label><select id="charGap"><option value="1">長点×1</option><option value="2">長点×2</option><option value="3" selected>長点×3（標準）</option><option value="4">長点×4</option><option value="5">長点×5</option></select></div></div>
 <div class="row"><div class="radio-group"><span style="color:var(--muted)">再生順:</span><label><input type="radio" name="mode" value="random" checked> ランダム</label><label><input type="radio" name="mode" value="seq"> いろは順</label><label style="margin-left:8px"><input type="checkbox" id="noRepeat" checked> 同じ字を続けない</label></div></div>
@@ -60,8 +60,9 @@ function pool(){return[...document.querySelectorAll('[data-r]:checked')].flatMap
 function updateCounter(){counter.textContent=`${count} / ${goal?goal:'-'}`;}
 function isSeq(){return document.querySelector('input[name="mode"]:checked').value==='seq';}
 function charGapMs(w){return 3*1.2/w*1000*+charGap.value;}
-function lockOn(){if(!lockFrame.checked)return;document.documentElement.classList.add('locked');document.body.classList.add('locked');}
-function lockOff(){document.documentElement.classList.remove('locked');document.body.classList.remove('locked');}
+function preventScroll(e){e.preventDefault();}
+function lockOn(){if(!lockFrame.checked)return;document.documentElement.classList.add('locked');document.body.classList.add('locked');window.addEventListener('touchmove',preventScroll,{passive:false});window.addEventListener('wheel',preventScroll,{passive:false});}
+function lockOff(){document.documentElement.classList.remove('locked');document.body.classList.remove('locked');window.removeEventListener('touchmove',preventScroll);window.removeEventListener('wheel',preventScroll);}
 async function loop(){if(!auto)return;const p=pool();if(!p.length){auto=false;autoToggle.textContent='開始';lockOff();return;}let pick;if(isSeq()){pick=p[seq++%p.length];}else{let tries=0;do{pick=p[Math.random()*p.length|0];tries++;}while(noRepeat.checked&&p.length>1&&pick.k===lastK&&tries<10);}lastK=pick.k;const card=[...document.querySelectorAll('.card')].find(x=>x.querySelector('.kana')?.textContent===pick.k);await playItem(pick,card);count++;updateCounter();if(goal&&count>=goal){auto=false;autoToggle.textContent='開始';nowPlaying.textContent='達成！';lockOff();return;}timer=setTimeout(loop,charGapMs(+wpm.value));}
 autoToggle.onclick=async()=>{await ac();auto=!auto;autoToggle.textContent=auto?'停止':'開始';if(auto){count=0;seq=0;lastK=null;updateCounter();lockOn();loop()}else{clearTimeout(timer);nowPlaying.textContent='―';lockOff();active.forEach(o=>{try{o.stop()}catch{}});}};
 const checkAll=document.getElementById('checkAll');function syncCheckAll(){const all=[...document.querySelectorAll('[data-r]')];checkAll.checked=all.length>0 && all.every(c=>c.checked);}checkAll.onchange=e=>{document.querySelectorAll('[data-r]').forEach(c=>c.checked=e.target.checked);};document.addEventListener('change',e=>{if(e.target.matches('[data-r]'))syncCheckAll();});window.addEventListener('DOMContentLoaded',()=>{document.querySelectorAll('[data-r]').forEach(c=>c.checked=true);syncCheckAll();});syncCheckAll();document.querySelectorAll('.repeatBtn').forEach(b=>b.onclick=()=>{document.querySelectorAll('.repeatBtn').forEach(x=>x.classList.remove('active'));b.classList.add('active');repeat=+b.dataset.r;});document.querySelectorAll('.goalBtn').forEach(b=>b.onclick=()=>{document.querySelectorAll('.goalBtn').forEach(x=>x.classList.remove('active'));b.classList.add('active');goal=+b.dataset.g;updateCounter();});updateCounter();
