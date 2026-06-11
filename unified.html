@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>モールス和文・欧文 統合Ver1.00</title>
+<style>
+:root{--bg:#f1f5f9;--card:#fff;--ink:#0f172a;--muted:#64748b;--accent:#2563eb}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif}
+html.locked,body.locked{overflow:hidden;height:100%;overscroll-behavior:none;touch-action:none}
+.container{max-width:1100px;margin:0 auto;padding:0 12px 48px}
+h1{font-size:22px;margin:12px 0 8px}
+.badge{font-size:12px;color:var(--muted);background:#e2e8f0;padding:2px 8px;border-radius:999px;margin-left:6px}
+.panel{background:var(--card);border:1px solid #e2e8f0;border-radius:12px;padding:10px;margin:12px 0;position:sticky;top:8px;z-index:10;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:6px 0}
+label.small{font-size:11px;color:var(--muted);display:block;margin-bottom:2px}
+input,select{padding:6px 8px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px}
+.btn{border:1px solid #cbd5e1;background:#fff;padding:6px 10px;border-radius:8px;cursor:pointer;font-size:13px}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn.active{background:#e0ecff;border-color:var(--accent)}
+#nowPlaying{min-width:110px;text-align:center;padding:5px 8px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;font-family:monospace;font-size:12px}
+.iroha-row{background:var(--card);border:1px solid #e2e8f0;border-radius:12px;padding:10px;margin-bottom:12px}
+.row-title{font-weight:700;margin-bottom:8px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:8px}
+.card{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:8px 4px;text-align:center}
+.card.playing{box-shadow:inset 0 0 0 2px var(--accent);background:#e0ecff}
+.kana{font-size:20px;font-weight:700}
+.latin{font-size:12px;color:var(--muted);margin-left:3px}
+.code{font-family:monospace;font-size:12px;color:#334155;min-height:18px}
+.btn-replay{margin-top:4px;width:100%;padding:4px;font-size:11px;border:1px solid #e2e8f0;background:#f8fafc;border-radius:6px}
+.status{font-size:12px;color:var(--muted);margin-left:8px}
+.radio-group{display:flex;gap:12px;align-items:center;font-size:13px}
+@media (max-width:720px){.panel{top:0;border-radius:0;margin:0 -12px 12px;padding:10px 12px}}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>モールス和文・欧文 <span class="badge">統合Ver1.00</span></h1>
+<div class="panel">
+<div class="row"><div><label class="small">WPM</label><input id="wpm" type="number" value="18" style="width:60px"></div><div><label class="small">Hz</label><input id="freq" type="number" value="750" style="width:68px"></div><div><label class="small">文字間隔</label><select id="charGap"><option value="1">長点×1</option><option value="2">長点×2</option><option value="3" selected>長点×3（標準）</option><option value="4">長点×4</option><option value="5">長点×5</option></select></div></div>
+<div class="row"><div><label class="small">文字種別</label><select id="langMode"><option value="wabun" selected>和文</option><option value="eubun">欧文</option></select></div><div><label class="small">練習モード</label><select id="practiceMode"><option value="receive" selected>受信</option><option value="send">送信</option></select></div><div><label class="small">表示→再生</label><select id="preDelay"><option value="0" selected>0秒</option><option value="1">1秒</option><option value="2">2秒</option><option value="3">3秒</option></select></div></div>
+<div class="row"><div class="radio-group"><span style="color:var(--muted)">再生順:</span><label><input type="radio" name="mode" value="random" checked> ランダム</label><label><input type="radio" name="mode" value="seq"> ABC順</label><label style="margin-left:8px"><input type="checkbox" id="noRepeat" checked> 同じ字を続けない</label></div></div>
+<div class="row"><span style="font-size:12px;color:var(--muted)">リピート:</span><button class="btn repeatBtn active" data-r="1">1回</button><button class="btn repeatBtn" data-r="3">3回</button><button class="btn repeatBtn" data-r="5">5回</button></div>
+<div class="row"><span style="font-size:12px;color:var(--muted)">目標文字数:</span><button class="btn goalBtn" data-g="50">50文字</button><button class="btn goalBtn" data-g="100">100文字</button><button class="btn goalBtn" data-g="200">200文字</button><button class="btn goalBtn active" data-g="0">無制限</button><span class="status" id="counter">0 / -</span></div>
+<div class="row"><button id="autoToggle" class="btn primary">開始</button><span id="nowPlaying">―</span><label style="margin-left:auto"><input type="checkbox" id="checkAll">全チェック</label></div>
+</div>
+<div id="rows"></div>
+<div id="drill" style="display:none;text-align:center;padding:60px 0;">
+  <div id="bigLetter" style="font-size:180px;font-weight:900;line-height:1;color:#0f172a;letter-spacing:.02em;">A</div>
+</div>
+<div class="cards" id="dakuten" style="display:none"></div>
+</div>
+<script>
+const eubunData=[{id:1,label:'1列 ABCDE',chars:[{k:'A',c:'・－'},{k:'B',c:'－・・・'},{k:'C',c:'－・－・'},{k:'D',c:'－・・'},{k:'E',c:'・'}]},{id:2,label:'2列 FGHIJ',chars:[{k:'F',c:'・・－・'},{k:'G',c:'－－・'},{k:'H',c:'・・・・'},{k:'I',c:'・・'},{k:'J',c:'・－－－'}]},{id:3,label:'3列 KLMNO',chars:[{k:'K',c:'－・－'},{k:'L',c:'・－・・'},{k:'M',c:'－－'},{k:'N',c:'－・'},{k:'O',c:'－－－'}]},{id:4,label:'4列 PQRST',chars:[{k:'P',c:'・－－・'},{k:'Q',c:'－－・－'},{k:'R',c:'・－・'},{k:'S',c:'・・・'},{k:'T',c:'－'}]},{id:5,label:'5列 UVWXYZ',chars:[{k:'U',c:'・・－'},{k:'V',c:'・・・－'},{k:'W',c:'・－－'},{k:'X',c:'－・・－'},{k:'Y',c:'－・－－'},{k:'Z',c:'－－・・'}]}];
+const wabunData=[{id:1,label:'1列 いろはにほへと',chars:[{k:'イ',c:'・－'},{k:'ロ',c:'・－・－'},{k:'ハ',c:'－・・・'},{k:'ニ',c:'－・－・'},{k:'ホ',c:'－・・'},{k:'ヘ',c:'・'},{k:'ト',c:'・・－・・'}]},{id:2,label:'2列 ちりぬるを',chars:[{k:'チ',c:'・・－・'},{k:'リ',c:'－－・'},{k:'ヌ',c:'・・・・'},{k:'ル',c:'－・－－・'},{k:'ヲ',c:'・－－－'}]},{id:3,label:'3列 わかよたれそ',chars:[{k:'ワ',c:'－・－'},{k:'カ',c:'・－・・'},{k:'ヨ',c:'－－'},{k:'タ',c:'－・'},{k:'レ',c:'－－－'},{k:'ソ',c:'－－－・'}]},{id:4,label:'4列 つねならむ',chars:[{k:'ツ',c:'・－－・'},{k:'ネ',c:'－－・－'},{k:'ナ',c:'・－・'},{k:'ラ',c:'・・・'},{k:'ム',c:'－'}]},{id:5,label:'5列 うゐの おくやま',chars:[{k:'ウ',c:'・・－'},{k:'ヰ',c:'・－・・－'},{k:'ノ',c:'・・－－'},{k:'オ',c:'・－・・・'},{k:'ク',c:'・・・－'},{k:'ヤ',c:'・－－'},{k:'マ',c:'－・・－'}]},{id:6,label:'6列 けふこえて',chars:[{k:'ケ',c:'－・－－'},{k:'フ',c:'－－・・'},{k:'コ',c:'－－－－'},{k:'エ',c:'－・－－－'},{k:'テ',c:'・－・－－'}]},{id:7,label:'7列 あさきゆめみし',chars:[{k:'ア',c:'－－・－－'},{k:'サ',c:'－・－・－'},{k:'キ',c:'－・－・・'},{k:'ユ',c:'－・・－－'},{k:'メ',c:'－・・・－'},{k:'ミ',c:'・・－・－'},{k:'シ',c:'－－・－・'}]},{id:8,label:'8列 ゑひもせす',chars:[{k:'ヱ',c:'・－－・・'},{k:'ヒ',c:'－－・・－'},{k:'モ',c:'－・・－・'},{k:'セ',c:'・－－－・'},{k:'ス',c:'－－－・－'}]},{id:9,label:'9列 ん',chars:[{k:'ン',c:'・－・－・'}]}];
+let rowsData=wabunData;
+
+const rowsWrap=document.getElementById('rows');
+function buildRows(){
+  rowsWrap.innerHTML='';
+  rowsData.forEach(r=>{
+    const d=document.createElement('div');
+    d.className='iroha-row';
+    d.innerHTML=`<div class="row-title"><label><input type="checkbox" data-r="${r.id}" checked> ${r.label}</label></div><div class="cards"></div>`;
+    const c=d.querySelector('.cards');
+    r.chars.forEach(o=>{
+      const card=document.createElement('div');
+      card.className='card';
+      card.dataset.k=o.k;
+      card.innerHTML=`<div><span class="kana">${o.k}</span></div><div class="code">${o.c}</div><button class="btn-replay">再生</button>`;
+      card.querySelector('button').onclick=()=>playItem(o,card);
+      c.appendChild(card);
+    });
+    rowsWrap.appendChild(d);
+  });
+}" checked> ${r.label}</label></div>`;rowsWrap.appendChild(d);});
+}
+buildRows();
+document.getElementById('langMode').addEventListener('change',e=>{
+  rowsData = e.target.value==='wabun' ? wabunData : eubunData;
+  buildRows();
+  // update radio label
+  document.querySelector('input[value="seq"]').parentNode.lastChild.textContent = e.target.value==='wabun' ? ' いろは順' : ' ABC順';
+});
+
+document.getElementById('dakuten').innerHTML='';
+let ctx,auto=false,timer,seq=0,active=new Set(),lastK=null,count=0,goal=0,repeat=1;
+async function ac(){if(!ctx)ctx=new AudioContext();if(ctx.state=='suspended')await ctx.resume();}
+const sleep=m=>new Promise(r=>setTimeout(r,m));
+async function playCode(code,f,w){const d=1.2/w;let t=ctx.currentTime+0.05;const o=ctx.createOscillator(),g=ctx.createGain();o.frequency.value=f;g.gain.value=0;o.connect(g).connect(ctx.destination);o.start(t);active.add(o);for(const ch of code){if(ch!=='・'&&ch!=='－')continue;const du=ch==='・'?d:d*3;g.gain.setValueAtTime(.8,t);g.gain.setValueAtTime(.8,t+du-.002);g.gain.linearRampToValueAtTime(0,t+du);t+=du+d;}o.stop(t);o.onended=()=>active.delete(o);return(t-ctx.currentTime)*1000;}
+async function playItem(o,card){await ac();nowPlaying.textContent=`${o.k} ${o.c}`;card&&card.classList.add('playing');const f=+freq.value,w=+wpm.value;for(let i=0;i<repeat;i++){await sleep(await playCode(o.c,f,w));if(i<repeat-1){await sleep(1200/w*3);}}card&&card.classList.remove('playing');}
+function pool(){return[...document.querySelectorAll('[data-r]:checked')].flatMap(cb=>rowsData.find(r=>r.id==+cb.dataset.r).chars);}
+function updateCounter(){counter.textContent=`${count} / ${goal?goal:'-'}`;}
+function isSeq(){return document.querySelector('input[name="mode"]:checked').value==='seq';}
+function charGapMs(w){return 3*1.2/w*1000*+charGap.value;}
+function preventScroll(e){e.preventDefault();}
+function preventKeys(e){if([' ','ArrowUp','ArrowDown','PageUp','PageDown','Home','End'].includes(e.key))e.preventDefault();}
+function lockOn(){return;}
+function lockOff(){return;}
+async function loop(){if(!auto)return;const p=pool();if(!p.length){auto=false;autoToggle.textContent='開始';document.getElementById('rows').style.display='';document.getElementById('drill').style.display='none';lockOff();return;}let pick;if(isSeq()){pick=p[seq++%p.length];}else{let tries=0;do{pick=p[Math.random()*p.length|0];tries++;}while(noRepeat.checked&&p.length>1&&pick.k===lastK&&tries<10);}lastK=pick.k;const mode=document.getElementById('practiceMode').value;if(mode==='receive'){const big=document.getElementById('bigLetter');if(big)big.textContent=pick.k;const pre=+document.getElementById('preDelay').value;if(pre>0)await sleep(pre*1000);await playItem(pick,null);}else{const card=[...document.querySelectorAll('.card')].find(x=>x.dataset.k===pick.k);await playItem(pick,card);}count++;updateCounter();if(goal&&count>=goal){auto=false;autoToggle.textContent='開始';nowPlaying.textContent='達成！';document.getElementById('rows').style.display='';document.getElementById('drill').style.display='none';lockOff();return;}timer=setTimeout(loop,charGapMs(+wpm.value));}let pick;if(isSeq()){pick=p[seq++%p.length];}else{let tries=0;do{pick=p[Math.random()*p.length|0];tries++;}while(noRepeat.checked&&p.length>1&&pick.k===lastK&&tries<10);}lastK=pick.k;const big=document.getElementById('bigLetter');if(big)big.textContent=pick.k;const pre=+document.getElementById('preDelay').value;if(pre>0)await sleep(pre*1000);await playItem(pick,null);count++;updateCounter();document.querySelector('input[value="seq"]').parentNode.lastChild.textContent=' いろは順';if(goal&&count>=goal){auto=false;autoToggle.textContent='開始';nowPlaying.textContent='達成！';document.getElementById('rows').style.display='';document.getElementById('drill').style.display='none';lockOff();return;}timer=setTimeout(loop,charGapMs(+wpm.value));}
+autoToggle.onclick=async()=>{await ac();auto=!auto;autoToggle.textContent=auto?'停止':'開始';if(auto){count=0;seq=0;lastK=null;updateCounter();const mode=document.getElementById('practiceMode').value;if(mode==='receive'){document.getElementById('rows').style.display='none';document.getElementById('drill').style.display='block';}else{document.getElementById('rows').style.display='';document.getElementById('drill').style.display='none';}lockOn();loop()}else{clearTimeout(timer);nowPlaying.textContent='―';document.getElementById('rows').style.display='';document.getElementById('drill').style.display='none';lockOff();active.forEach(o=>{try{o.stop()}catch{}});}};
+const checkAll=document.getElementById('checkAll');function syncCheckAll(){const all=[...document.querySelectorAll('[data-r]')];checkAll.checked=all.length>0 && all.every(c=>c.checked);}checkAll.onchange=e=>{document.querySelectorAll('[data-r]').forEach(c=>c.checked=e.target.checked);};document.addEventListener('change',e=>{if(e.target.matches('[data-r]'))syncCheckAll();});window.addEventListener('DOMContentLoaded',()=>{document.querySelectorAll('[data-r]').forEach(c=>c.checked=true);syncCheckAll();});syncCheckAll();document.querySelectorAll('.repeatBtn').forEach(b=>b.onclick=()=>{document.querySelectorAll('.repeatBtn').forEach(x=>x.classList.remove('active'));b.classList.add('active');repeat=+b.dataset.r;});document.querySelectorAll('.goalBtn').forEach(b=>b.onclick=()=>{document.querySelectorAll('.goalBtn').forEach(x=>x.classList.remove('active'));b.classList.add('active');goal=+b.dataset.g;updateCounter();document.querySelector('input[value="seq"]').parentNode.lastChild.textContent=' いろは順';});updateCounter();document.querySelector('input[value="seq"]').parentNode.lastChild.textContent=' いろは順';
+</script>
+</body>
+</html>
