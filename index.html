@@ -3,12 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>モールス和文・いろは順 Ver1.28f</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>モールス和文・いろは順 Ver1.28g</title>
 <style>
 :root{--bg:#f1f5f9;--card:#fff;--ink:#0f172a;--muted:#64748b;--accent:#2563eb}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif}
-html.locked,body.locked{overflow:hidden;height:100%}
+html.locked,body.locked{overflow:hidden;height:100%;overscroll-behavior:none;touch-action:none}
 .container{max-width:1100px;margin:0 auto;padding:0 12px 48px}
 h1{font-size:22px;margin:12px 0 8px}
 .badge{font-size:12px;color:var(--muted);background:#e2e8f0;padding:2px 8px;border-radius:999px;margin-left:6px}
@@ -35,7 +36,7 @@ input,select{padding:6px 8px;border:1px solid #cbd5e1;border-radius:8px;font-siz
 </head>
 <body>
 <div class="container">
-<h1>モールス和文・いろは順 <span class="badge">Ver1.28f</span></h1>
+<h1>モールス和文・いろは順 <span class="badge">Ver1.28g</span></h1>
 <div class="panel">
 <div class="row"><div><label class="small">WPM</label><input id="wpm" type="number" value="18" style="width:60px"></div><div><label class="small">Hz</label><input id="freq" type="number" value="750" style="width:68px"></div><div><label class="small">文字間隔</label><select id="charGap"><option value="1">長点×1</option><option value="2">長点×2</option><option value="3" selected>長点×3（標準）</option><option value="4">長点×4</option><option value="5">長点×5</option></select></div></div>
 <div class="row"><div class="radio-group"><span style="color:var(--muted)">再生順:</span><label><input type="radio" name="mode" value="random" checked> ランダム</label><label><input type="radio" name="mode" value="seq"> いろは順</label><label style="margin-left:8px"><input type="checkbox" id="noRepeat" checked> 同じ字を続けない</label></div></div>
@@ -56,13 +57,14 @@ async function ac(){if(!ctx)ctx=new AudioContext();if(ctx.state=='suspended')awa
 const sleep=m=>new Promise(r=>setTimeout(r,m));
 async function playCode(code,f,w){const d=1.2/w;let t=ctx.currentTime+0.05;const o=ctx.createOscillator(),g=ctx.createGain();o.frequency.value=f;g.gain.value=0;o.connect(g).connect(ctx.destination);o.start(t);active.add(o);for(const ch of code){if(ch!=='・'&&ch!=='－')continue;const du=ch==='・'?d:d*3;g.gain.setValueAtTime(.8,t);g.gain.setValueAtTime(.8,t+du-.002);g.gain.linearRampToValueAtTime(0,t+du);t+=du+d;}o.stop(t);o.onended=()=>active.delete(o);return(t-ctx.currentTime)*1000;}
 async function playItem(o,card){await ac();nowPlaying.textContent=`${o.k} ${o.c}`;card&&card.classList.add('playing');const f=+freq.value,w=+wpm.value;for(let i=0;i<repeat;i++){await sleep(await playCode(o.c,f,w));if(i<repeat-1){await sleep(1200/w*3);}}card&&card.classList.remove('playing');}
-function pool(){return[...document.querySelectorAll('[data-r]:checked')].flatMap(cb=>rowsData.find(r=>r.id==cb.dataset.r).chars);}
+function pool(){return[...document.querySelectorAll('[data-r]:checked')].flatMap(cb=>rowsData.find(r=>r.id==+cb.dataset.r).chars);}
 function updateCounter(){counter.textContent=`${count} / ${goal?goal:'-'}`;}
 function isSeq(){return document.querySelector('input[name="mode"]:checked').value==='seq';}
 function charGapMs(w){return 3*1.2/w*1000*+charGap.value;}
 function preventScroll(e){e.preventDefault();}
-function lockOn(){if(!lockFrame.checked)return;document.documentElement.classList.add('locked');document.body.classList.add('locked');window.addEventListener('touchmove',preventScroll,{passive:false});window.addEventListener('wheel',preventScroll,{passive:false});}
-function lockOff(){document.documentElement.classList.remove('locked');document.body.classList.remove('locked');window.removeEventListener('touchmove',preventScroll);window.removeEventListener('wheel',preventScroll);}
+function preventKeys(e){if([' ','ArrowUp','ArrowDown','PageUp','PageDown','Home','End'].includes(e.key))e.preventDefault();}
+function lockOn(){if(!lockFrame.checked)return;const y=window.scrollY||document.documentElement.scrollTop;document.body.dataset.lockY=y;document.documentElement.classList.add('locked');document.body.classList.add('locked');document.body.style.position='fixed';document.body.style.top=`-${y}px`;document.body.style.left='0';document.body.style.right='0';document.body.style.width='100%';window.addEventListener('touchmove',preventScroll,{passive:false});window.addEventListener('wheel',preventScroll,{passive:false});window.addEventListener('keydown',preventKeys);}
+function lockOff(){const y=parseInt(document.body.dataset.lockY||'0',10);document.documentElement.classList.remove('locked');document.body.classList.remove('locked');document.body.style.position='';document.body.style.top='';document.body.style.left='';document.body.style.right='';document.body.style.width='';window.removeEventListener('touchmove',preventScroll);window.removeEventListener('wheel',preventScroll);window.removeEventListener('keydown',preventKeys);window.scrollTo(0,y);}
 async function loop(){if(!auto)return;const p=pool();if(!p.length){auto=false;autoToggle.textContent='開始';lockOff();return;}let pick;if(isSeq()){pick=p[seq++%p.length];}else{let tries=0;do{pick=p[Math.random()*p.length|0];tries++;}while(noRepeat.checked&&p.length>1&&pick.k===lastK&&tries<10);}lastK=pick.k;const card=[...document.querySelectorAll('.card')].find(x=>x.querySelector('.kana')?.textContent===pick.k);await playItem(pick,card);count++;updateCounter();if(goal&&count>=goal){auto=false;autoToggle.textContent='開始';nowPlaying.textContent='達成！';lockOff();return;}timer=setTimeout(loop,charGapMs(+wpm.value));}
 autoToggle.onclick=async()=>{await ac();auto=!auto;autoToggle.textContent=auto?'停止':'開始';if(auto){count=0;seq=0;lastK=null;updateCounter();lockOn();loop()}else{clearTimeout(timer);nowPlaying.textContent='―';lockOff();active.forEach(o=>{try{o.stop()}catch{}});}};
 const checkAll=document.getElementById('checkAll');function syncCheckAll(){const all=[...document.querySelectorAll('[data-r]')];checkAll.checked=all.length>0 && all.every(c=>c.checked);}checkAll.onchange=e=>{document.querySelectorAll('[data-r]').forEach(c=>c.checked=e.target.checked);};document.addEventListener('change',e=>{if(e.target.matches('[data-r]'))syncCheckAll();});window.addEventListener('DOMContentLoaded',()=>{document.querySelectorAll('[data-r]').forEach(c=>c.checked=true);syncCheckAll();});syncCheckAll();document.querySelectorAll('.repeatBtn').forEach(b=>b.onclick=()=>{document.querySelectorAll('.repeatBtn').forEach(x=>x.classList.remove('active'));b.classList.add('active');repeat=+b.dataset.r;});document.querySelectorAll('.goalBtn').forEach(b=>b.onclick=()=>{document.querySelectorAll('.goalBtn').forEach(x=>x.classList.remove('active'));b.classList.add('active');goal=+b.dataset.g;updateCounter();});updateCounter();
