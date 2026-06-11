@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<title>モールス欧文 Ver1.00</title>
+<title>モールス欧文 Ver1.01</title>
 <style>
 :root{--bg:#f1f5f9;--card:#fff;--ink:#0f172a;--muted:#64748b;--accent:#2563eb}
 *{box-sizing:border-box}
@@ -37,10 +37,10 @@ input,select{padding:6px 8px;border:1px solid #cbd5e1;border-radius:8px;font-siz
 </head>
 <body>
 <div class="container">
-<h1>モールス欧文 <span class="badge">Ver1.00</span></h1>
+<h1>モールス欧文 <span class="badge">Ver1.01</span></h1>
 <div class="panel">
 <div class="row"><div><label class="small">WPM</label><input id="wpm" type="number" value="18" style="width:60px"></div><div><label class="small">Hz</label><input id="freq" type="number" value="750" style="width:68px"></div><div><label class="small">文字間隔</label><select id="charGap"><option value="1">長点×1</option><option value="2">長点×2</option><option value="3" selected>長点×3（標準）</option><option value="4">長点×4</option><option value="5">長点×5</option></select></div></div>
-<div class="row"><div class="radio-group"><span style="color:var(--muted)">再生順:</span><label><input type="radio" name="mode" value="random" checked> ランダム</label><label><input type="radio" name="mode" value="seq"> いろは順</label><label style="margin-left:8px"><input type="checkbox" id="noRepeat" checked> 同じ字を続けない</label></div></div>
+<div class="row"><div class="radio-group"><span style="color:var(--muted)">再生順:</span><label><input type="radio" name="mode" value="random" checked> ランダム</label><label><input type="radio" name="mode" value="seq"> ABC順</label><label style="margin-left:8px"><input type="checkbox" id="noRepeat" checked> 同じ字を続けない</label></div></div>
 <div class="row"><span style="font-size:12px;color:var(--muted)">リピート:</span><button class="btn repeatBtn active" data-r="1">1回</button><button class="btn repeatBtn" data-r="3">3回</button><button class="btn repeatBtn" data-r="5">5回</button></div>
 <div class="row"><span style="font-size:12px;color:var(--muted)">目標文字数:</span><button class="btn goalBtn" data-g="50">50文字</button><button class="btn goalBtn" data-g="100">100文字</button><button class="btn goalBtn" data-g="200">200文字</button><button class="btn goalBtn active" data-g="0">無制限</button><span class="status" id="counter">0 / -</span></div>
 <div class="row"><button id="autoToggle" class="btn primary">開始</button><span id="nowPlaying">―</span><label style="margin-left:auto"><input type="checkbox" id="checkAll">全チェック</label></div>
