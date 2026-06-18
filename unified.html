@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<title>モールス和文・欧文 統合Ver1.00</title>
+<title>モールス和文・欧文 統合Ver1.01</title>
 <style>
 :root{--bg:#f1f5f9;--card:#fff;--ink:#0f172a;--muted:#64748b;--accent:#2563eb}
 *{box-sizing:border-box}
@@ -35,7 +35,7 @@ input,select{padding:6px 8px;border:1px solid #cbd5e1;border-radius:8px;font-siz
 </head>
 <body>
 <div class="container">
-<h1>モールス和文・欧文 <span class="badge">統合Ver1.00</span></h1>
+<h1>モールス和文・欧文 <span class="badge">統合Ver1.01</span></h1>
 <div class="panel">
 <div class="row"><div><label class="small">WPM</label><input id="wpm" type="number" value="18" style="width:60px"></div><div><label class="small">Hz</label><input id="freq" type="number" value="750" style="width:68px"></div><div><label class="small">文字間隔</label><select id="charGap"><option value="1">長点×1</option><option value="2">長点×2</option><option value="3" selected>長点×3（標準）</option><option value="4">長点×4</option><option value="5">長点×5</option></select></div></div>
 <div class="row"><div><label class="small">文字種別</label><select id="langMode"><option value="wabun" selected>和文</option><option value="eubun">欧文</option></select></div><div><label class="small">練習モード</label><select id="practiceMode"><option value="receive" selected>受信</option><option value="send">送信</option></select></div><div><label class="small">表示→再生</label><select id="preDelay"><option value="0" selected>0秒</option><option value="1">1秒</option><option value="2">2秒</option><option value="3">3秒</option></select></div></div>
@@ -53,6 +53,8 @@ input,select{padding:6px 8px;border:1px solid #cbd5e1;border-radius:8px;font-siz
 const eubunData=[{id:1,label:'1列 ABCDE',chars:[{k:'A',c:'・－'},{k:'B',c:'－・・・'},{k:'C',c:'－・－・'},{k:'D',c:'－・・'},{k:'E',c:'・'}]},{id:2,label:'2列 FGHIJ',chars:[{k:'F',c:'・・－・'},{k:'G',c:'－－・'},{k:'H',c:'・・・・'},{k:'I',c:'・・'},{k:'J',c:'・－－－'}]},{id:3,label:'3列 KLMNO',chars:[{k:'K',c:'－・－'},{k:'L',c:'・－・・'},{k:'M',c:'－－'},{k:'N',c:'－・'},{k:'O',c:'－－－'}]},{id:4,label:'4列 PQRST',chars:[{k:'P',c:'・－－・'},{k:'Q',c:'－－・－'},{k:'R',c:'・－・'},{k:'S',c:'・・・'},{k:'T',c:'－'}]},{id:5,label:'5列 UVWXYZ',chars:[{k:'U',c:'・・－'},{k:'V',c:'・・・－'},{k:'W',c:'・－－'},{k:'X',c:'－・・－'},{k:'Y',c:'－・－－'},{k:'Z',c:'－－・・'}]}];
 const wabunData=[{id:1,label:'1列 いろはにほへと',chars:[{k:'イ',c:'・－'},{k:'ロ',c:'・－・－'},{k:'ハ',c:'－・・・'},{k:'ニ',c:'－・－・'},{k:'ホ',c:'－・・'},{k:'ヘ',c:'・'},{k:'ト',c:'・・－・・'}]},{id:2,label:'2列 ちりぬるを',chars:[{k:'チ',c:'・・－・'},{k:'リ',c:'－－・'},{k:'ヌ',c:'・・・・'},{k:'ル',c:'－・－－・'},{k:'ヲ',c:'・－－－'}]},{id:3,label:'3列 わかよたれそ',chars:[{k:'ワ',c:'－・－'},{k:'カ',c:'・－・・'},{k:'ヨ',c:'－－'},{k:'タ',c:'－・'},{k:'レ',c:'－－－'},{k:'ソ',c:'－－－・'}]},{id:4,label:'4列 つねならむ',chars:[{k:'ツ',c:'・－－・'},{k:'ネ',c:'－－・－'},{k:'ナ',c:'・－・'},{k:'ラ',c:'・・・'},{k:'ム',c:'－'}]},{id:5,label:'5列 うゐの おくやま',chars:[{k:'ウ',c:'・・－'},{k:'ヰ',c:'・－・・－'},{k:'ノ',c:'・・－－'},{k:'オ',c:'・－・・・'},{k:'ク',c:'・・・－'},{k:'ヤ',c:'・－－'},{k:'マ',c:'－・・－'}]},{id:6,label:'6列 けふこえて',chars:[{k:'ケ',c:'－・－－'},{k:'フ',c:'－－・・'},{k:'コ',c:'－－－－'},{k:'エ',c:'－・－－－'},{k:'テ',c:'・－・－－'}]},{id:7,label:'7列 あさきゆめみし',chars:[{k:'ア',c:'－－・－－'},{k:'サ',c:'－・－・－'},{k:'キ',c:'－・－・・'},{k:'ユ',c:'－・・－－'},{k:'メ',c:'－・・・－'},{k:'ミ',c:'・・－・－'},{k:'シ',c:'－－・－・'}]},{id:8,label:'8列 ゑひもせす',chars:[{k:'ヱ',c:'・－－・・'},{k:'ヒ',c:'－－・・－'},{k:'モ',c:'－・・－・'},{k:'セ',c:'・－－－・'},{k:'ス',c:'－－－・－'}]},{id:9,label:'9列 ん',chars:[{k:'ン',c:'・－・－・'}]}];
 let rowsData=wabunData;
+const codeToAlpha={'・－':'A','－・・・':'B','－・－・':'C','－・・':'D','・':'E','・・－・':'F','－－・':'G','・・・・':'H','・・':'I','・－－－':'J','－・－':'K','・－・・':'L','－－':'M','－・':'N','－－－':'O','・－－・':'P','－－・－':'Q','・－・':'R','・・・':'S','－':'T','・・－':'U','・・・－':'V','・－－':'W','－・・－':'X','－・－－':'Y','－－・・':'Z'};
+
 
 const rowsWrap=document.getElementById('rows');
 function buildRows(){
@@ -66,7 +68,7 @@ function buildRows(){
       const card=document.createElement('div');
       card.className='card';
       card.dataset.k=o.k;
-      card.innerHTML=`<div><span class="kana">${o.k}</span></div><div class="code">${o.c}</div><button class="btn-replay">再生</button>`;
+      const alpha = (document.getElementById('langMode').value==='wabun' && codeToAlpha[o.c]) ? `<span style="font-size:12px;color:#64748b;margin-left:3px">${codeToAlpha[o.c]}</span>` : '';card.innerHTML=`<div><span class="kana">${o.k}</span>${alpha}</div><div class="code">${o.c}</div><button class="btn-replay">再生</button>`;
       card.querySelector('button').onclick=()=>playItem(o,card);
       c.appendChild(card);
     });
