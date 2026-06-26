@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ja"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>JS6UWQ v1.51</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>body{background:#09090b;color:#e4e4e7;font-family:system-ui;touch-action:manipulation}.tog{position:relative;width:30px;height:16px}.tog input{display:none}.tog span{position:absolute;inset:0;background:#3f3f46;border-radius:999px}.tog span:before{content:"";position:absolute;width:12px;height:12px;left:2px;top:2px;background:#fff;border-radius:50%;transition:.15s}.tog input:checked+span{background:#10b981}.tog input:checked+span:before{transform:translateX(14px)}.keybtn{aspect-ratio:1.47/1;min-height:90px;max-height:140px}.kbd button{background:#1a1a1e;border:1px solid #2a2a30;border-radius:5px;padding:4px 0;font-size:16px;line-height:1.05}</style>
+</head>
+<body>
+<div class="max-w-[600px] mx-auto p-2 pb-1">
+<header class="flex justify-between items-center mb-1">
+<div class="flex items-center gap-1.5"><div><div class="font-bold text-[13px]">CW Keyer</div><div class="text-[9px] text-zinc-500">v1.51</div></div></div>
+<div class="flex gap-1"><button id="helpBtn" class="w-7 h-7 bg-zinc-900 rounded border border-zinc-800 text-[10px]">?</button><button id="cfgBtn" class="w-7 h-7 bg-zinc-900 rounded border border-zinc-800">⚙</button></div>
+</header>
+<div id="list" class="space-y-0.5"></div>
+<div class="mt-1 bg-zinc-900 rounded p-1 border border-zinc-800">
+<div class="flex justify-between items-center"><span class="text-[10px] text-zinc-500">URCALL <span class="text-[9px] text-zinc-600">(タップで入力)</span></span><button id="kbdClose" class="text-[11px] text-zinc-400 px-2 py-1 hidden">閉じる</button><button id="clr" class="text-[11px] text-zinc-400 px-2 py-1">CLR</button></div>
+<div id="urcall" class="font-mono text-2xl h-12 flex items-center cursor-pointer">—</div>
+<div id="kbdWrap" class="hidden">
+<div class="kbd grid grid-cols-10 gap-0.5 mt-1"><script>document.write('1234567890'.split('').map(c=>`<button data-k="${c}">${c}</button>`).join(''))</script></div>
+<div class="kbd grid grid-cols-10 gap-0.5 mt-0.5"><script>document.write('QWERTYUIOP'.split('').map(c=>`<button data-k="${c}">${c}</button>`).join(''))</script></div>
+<div class="kbd grid grid-cols-10 gap-0.5 mt-0.5"><div></div><script>document.write('ASDFGHJKL'.split('').map(c=>`<button data-k="${c}">${c}</button>`).join(''))</script><div></div></div>
+<div class="kbd grid grid-cols-10 gap-0.5 mt-0.5"><div></div><script>document.write('ZXCVBNM'.split('').map(c=>`<button data-k="${c}">${c}</button>`).join(''))</script><button data-k="⌫" class="bg-zinc-800">⌫</button><button data-k="/">/</button></div>
+<div class="kbd grid grid-cols-1 gap-0.5 mt-0.5"><button data-k=" " class="bg-zinc-800">SPACE</button></div>
+</div>
+</div>
+<div id="keyArea" class="mt-2"></div>
+</div>
+
+<div id="help" class="fixed inset-0 bg-black/70 hidden z-50"><div class="absolute inset-0 m-auto max-w-[600px] h-[85vh] bg-zinc-900 p-3 rounded-xl overflow-y-auto text-[12px] leading-5">
+<div class="flex justify-between items-center mb-2"><div class="font-bold">使い方 - JS6UWQ v1.51</div><button id="helpClose" class="w-6 h-6 bg-zinc-800 rounded">×</button></div>
+<div class="space-y-2">
+<div><b>1. 基本</b><br>・上段の▶でCQ等送信、■で停止<br>・URCALL欄に相手コール入力、CLRで消去<br>・繰り返し送信は右側のトグルスイッチをONにする<br>・初期の定型文は削除、変更可能</div>
+<div><b>2. 設定(⚙)</b><br>・速度15-30WPM、トーン400-1000Hz<br>・音量10-100% (Pixel 7aは60-80%推奨)<br>・間隔1-10秒<br>・キーモード:縦振り/エレキー<br>・利き手、スクイズOFF/A/B</div>
+<div><b>3. エレキー</b><br>・右利き:左=・右=ー<br>・スクイズBで両方押しっぱなし→自動交互<br>・Aはメモリーなし、Bは標準</div>
+<div><b>4. マクロ</b><br>{MYCALL}{OP}{QTH}{URCALL}{GREETING}が使える<br>例: CQ CQ DE {MYCALL} {QTH}<br>受信時にキーボードで相手局のコールサインを入力で{URCALL}で打鍵される<br>{GREETING}は時間で自動挨拶: 04-11時=GM、12-17時=GA、18-03時=GE<br><br><b>プロサイン</b><br>&lt;BT&gt; = -...- (区切り)、&lt;AR&gt; = .-.-. (終止)、&lt;SK&gt; = ...-.-、&lt;KN&gt; = -.-.-、&lt;AS&gt; = .-...<br>例: {URCALL} DE {MYCALL} &lt;BT&gt; GM OM &lt;AR&gt;</div>
+<div><b>5. 不具合対応履歴</b><br>v1.27-28:初回のみ大音量→v1.42で修正(マスターゲイン1.0)<br>v1.46:キーボード折りたたみ追加<br>v1.46b:短点2回鳴り修正<br>v1.47:ボタン縦1.5倍<br>v1.48:メモリー6行化<br>v1.49:5行目変更<br>v1.51:<BT>等プロサイン対応</div>
+<div><b>6. 端末</b><br>Android Pixel 7a動作確認済</div>
+</div>
+</div></div>
+
+<div id="panel" class="fixed inset-0 bg-black/70 hidden z-50"><div class="absolute bottom-0 inset-x-0 bg-zinc-900 p-3 rounded-t-xl max-w-[600px] mx-auto">
+<div class="text-xs font-bold mb-1">設定</div>
+<input id="my" placeholder="MyCall" class="w-full p-1.5 bg-black rounded border border-zinc-800 uppercase text-xs mb-1">
+<input id="op" placeholder="OP" class="w-full p-1.5 bg-black rounded border border-zinc-800 uppercase text-xs mb-1">
+<input id="qth" placeholder="QTH" class="w-full p-1.5 bg-black rounded border border-zinc-800 uppercase text-xs">
+<div class="grid grid-cols-2 gap-2 mt-2 text-[10px]">
+<div>速度 <span class="float-right"><span id="sv">20</span>WPM</span><input type="range" id="spd" min="15" max="30" value="20" class="w-full"></div>
+<div>トーン <span class="float-right"><span id="tv">700</span>Hz</span><input type="range" id="ton" min="400" max="1000" step="10" value="700" class="w-full"></div>
+<div>音量 <span class="float-right"><span id="vv">25</span>%</span><input type="range" id="vol" min="10" max="100" value="25" class="w-full"></div>
+<div>間隔 <span class="float-right"><span id="rv">3</span>秒</span><input type="range" id="rep" min="1" max="10" value="3" class="w-full"></div>
+</div>
+<div class="grid grid-cols-2 gap-2 mt-2 text-[11px]">
+<div>キーモード<br><select id="kmode" class="w-full bg-black border border-zinc-700 rounded p-1 mt-0.5"><option value="straight">縦振り</option><option value="paddle" selected>エレキー</option></select></div>
+<div>利き手<br><select id="hand" class="w-full bg-black border border-zinc-700 rounded p-1 mt-0.5"><option value="right">右利き</option><option value="left">左利き</option></select></div>
+</div>
+<div class="mt-2 text-[11px]">スクイズ<br><select id="squeeze" class="w-full bg-black border border-zinc-700 rounded p-1 mt-0.5"><option value="OFF">OFF</option><option value="A">A</option><option value="B" selected>B</option></select></div>
+<button id="close" class="w-full mt-2 py-1.5 bg-emerald-600 rounded text-xs">閉じる</button>
+</div></div>
+
+<script>
+const M={'A':'.-','B':'-...','C':'-.-.','D':'-..','E':'.','F':'..-.','G':'--.','H':'....','I':'..','J':'.---','K':'-.-','L':'.-..','M':'--','N':'-.','O':'---','P':'.--.','Q':'--.-','R':'.-.','S':'...','T':'-','U':'..-','V':'...-','W':'.--','X':'-..-','Y':'-.--','Z':'--..','0':'-----','1':'.----','2':'..---','3':'...--','4':'....-','5':'.....','6':'-....','7':'--...','8':'---..','9':'----.',' ':' '};
+M['']='-...-';M['']='.-.-.';M['']='...-.-';M['']='-.-.-';M['']='.-...';M['']='.-.-';M['']='..-.-';M['']='...-.';M['	']='....--';
+let cfg={spd:20,ton:700,rep:3,my:'',op:'',qth:'',ur:'',kmode:'paddle',hand:'right',squeeze:'B',vol:0.25};
+let macros=[{t:"CQ CQ DE {MYCALL} {QTH} PSE K",r:1},{t:"{URCALL}{GREETING} OM URRST 599 5NN BK",r:0},{t:"R TNX FB QSO HPE CU AGN 73 73 TU E E",r:0},{t:"TU E E",r:0},{t:"HR NAME IS {OP} <BT> HR QTH IS {QTH} BK",r:0},{t:"",r:0}];
+let ctx,gain,playing=null;
+const audio=()=>{if(!ctx){ctx=new AudioContext();gain=ctx.createGain();gain.gain.value=1.0;gain.connect(ctx.destination)}};
+function beep(at,dur){const o=ctx.createOscillator(),g=ctx.createGain();o.type='sine';o.frequency.value=cfg.ton;g.gain.setValueAtTime(0,at);g.gain.linearRampToValueAtTime(cfg.vol,at+0.003);g.gain.setValueAtTime(cfg.vol,at+dur-0.003);g.gain.linearRampToValueAtTime(0,at+dur);o.connect(g);g.connect(gain);o.start(at);o.stop(at+dur+0.01);return o}
+const sleep=(ms,s)=>new Promise(r=>{let t=setTimeout(r,ms);const i=setInterval(()=>{if(s()){clearTimeout(t);clearInterval(i);r()}},15)});
+async function play(txt,stop){const dit=1.2/cfg.spd;audio();let t=ctx.currentTime+0.05;const oscs=[];for(const ch of txt.toUpperCase()){if(stop())break;if(ch===' '){t+=dit*7;continue}const code=M[ch];if(!code)continue;for(const s of code){if(stop())break;const dur=s==='.'?dit:dit*3;oscs.push(beep(t,dur));t+=dur+dit} t+=dit*2} playing.oscs=oscs; await sleep(Math.max(0,(t-ctx.currentTime)*1000),stop); oscs.forEach(o=>{try{o.stop()}catch{}})}
+const greet=()=>{const h=new Date().getHours();return h<4||h>=18?'GE':h<12?'GM':'GA'};
+const proc=t=>t.replace(/{MYCALL}/g,cfg.my).replace(/{OP}/g,cfg.op).replace(/{QTH}/g,cfg.qth).replace(/{URCALL}/g,cfg.ur).replace(/{GREETING}/g,greet()).replace(/<BT>/gi,'').replace(/<AR>/gi,'').replace(/<SK>/gi,'').replace(/<KN>/gi,'').replace(/<AS>/gi,'').replace(/<AA>/gi,'').replace(/<INT>/gi,'').replace(/<VE>/gi,'').replace(/<HM>/gi,'	');
+async function start(i){if(playing)stopPlay();audio();const b=document.querySelector(`button[data-i="${i}"]`);playing={i,stop:false,oscs:[]};b.textContent='■';b.classList.replace('bg-emerald-600','bg-red-600');do{await play(proc(macros[i].t),()=>playing.stop);if(playing.stop)break;if(!macros[i].r)break;await sleep(cfg.rep*1000,()=>playing.stop)}while(!playing.stop);stopPlay()}
+function stopPlay(){if(!playing)return;const b=document.querySelector(`button[data-i="${playing.i}"]`);b.textContent='▶';b.classList.replace('bg-red-600','bg-emerald-600');if(playing.oscs)playing.oscs.forEach(o=>{try{o.stop()}catch{}});playing=null}
+function upd(){document.getElementById('urcall').textContent=cfg.ur||'—'}
+let ditDown=false,dahDown=false,keying=false,last='.',nextTime=0;
+async function paddleLoop(){if(keying)return;keying=true;audio();const dit=1.2/cfg.spd;let send=null;if(ditDown&&dahDown){send=last==='.'?'-':'.'}else if(ditDown){send='.'}else if(dahDown){send='-'}else{keying=false;return}last=send;const dur=send==='.'?dit:dit*3;const t=Math.max(ctx.currentTime+0.005,nextTime);beep(t,dur);nextTime=t+dur+dit;await new Promise(r=>setTimeout(r,(dur+dit)*1000));keying=false;if(ditDown||dahDown)setTimeout(paddleLoop,5)}
+function paddleDown(isDit){audio();if(isDit)ditDown=true;else dahDown=true;if(!keying)paddleLoop()}
+function paddleUp(isDit){if(isDit)ditDown=false;else dahDown=false;if(!ditDown&&!dahDown)nextTime=0}
+function renderKeys(){const a=document.getElementById('keyArea');a.innerHTML='';const left=isDit=>cfg.hand==='right'?isDit:!isDit;a.innerHTML=`<div class="grid grid-cols-2 gap-2"><div><button id="pd1" class="keybtn w-full bg-blue-700 active:bg-red-900 border border-blue-800 rounded-2xl font-bold text-xl">${left(true)?'・':'ー'}</button></div><div><button id="pd2" class="keybtn w-full bg-blue-700 active:bg-red-900 border border-blue-800 rounded-2xl font-bold text-xl">${left(false)?'・':'ー'}</button></div></div>`;const b1=pd1,b2=pd2;const d1=()=>{paddleDown(left(true));b1.classList.add('bg-red-900')},u1=()=>{paddleUp(left(true));b1.classList.remove('bg-red-900')},d2=()=>{paddleDown(left(false));b2.classList.add('bg-red-900')},u2=()=>{paddleUp(left(false));b2.classList.remove('bg-red-900')};b1.addEventListener('touchstart',e=>{e.preventDefault();d1()});b1.addEventListener('touchend',e=>{e.preventDefault();u1()});b1.onmousedown=d1;b1.onmouseup=b1.onmouseleave=u1;b2.addEventListener('touchstart',e=>{e.preventDefault();d2()});b2.addEventListener('touchend',e=>{e.preventDefault();u2()});b2.onmousedown=d2;b2.onmouseup=b2.onmouseleave=u2}
+function render(){const l=document.getElementById('list');l.innerHTML='';macros.forEach((m,i)=>{l.innerHTML+=`<div class="flex items-center gap-2 p-2 bg-zinc-900 rounded-lg border border-zinc-800 mb-1"><button data-i="${i}" class="w-9 h-9 shrink-0 rounded-full bg-emerald-600 text-black text-[14px] font-bold">▶</button><input value="${m.t}" data-i="${i}" class="flex-1 bg-transparent outline-none text-[13px] py-1"><label class="tog shrink-0"><input type="checkbox" ${m.r?'checked':''} data-r="${i}"><span></span></label></div>`});document.querySelectorAll('button[data-i]').forEach(b=>b.onclick=()=>{const i=+b.dataset.i;playing&&playing.i===i?stopPlay():start(i)});document.querySelectorAll('input[data-i]').forEach(i=>i.oninput=e=>macros[+e.target.dataset.i].t=e.target.value);document.querySelectorAll('input[data-r]').forEach(c=>c.onchange=e=>macros[+e.target.dataset.r].r=e.target.checked)}
+document.getElementById('cfgBtn').onclick=()=>document.getElementById('panel').classList.remove('hidden');document.getElementById('close').onclick=()=>document.getElementById('panel').classList.add('hidden');document.getElementById('helpBtn').onclick=()=>document.getElementById('help').classList.remove('hidden');document.getElementById('helpClose').onclick=()=>document.getElementById('help').classList.add('hidden');
+my.oninput=e=>cfg.my=e.target.value.toUpperCase();op.oninput=e=>cfg.op=e.target.value.toUpperCase();qth.oninput=e=>cfg.qth=e.target.value.toUpperCase();
+spd.oninput=e=>{cfg.spd=+e.target.value;sv.textContent=cfg.spd};ton.oninput=e=>{cfg.ton=+e.target.value;tv.textContent=cfg.ton};rep.oninput=e=>{cfg.rep=+e.target.value;rv.textContent=cfg.rep};vol.oninput=e=>{cfg.vol=+e.target.value/100;vv.textContent=e.target.value};
+kmode.onchange=e=>{cfg.kmode=e.target.value;renderKeys()};hand.onchange=e=>{cfg.hand=e.target.value;renderKeys()};squeeze.onchange=e=>cfg.squeeze=e.target.value;
+const kbdWrap=document.getElementById('kbdWrap'),kbdClose=document.getElementById('kbdClose');
+urcall.onclick=()=>{kbdWrap.classList.toggle('hidden');kbdClose.classList.toggle('hidden')};kbdClose.onclick=()=>{kbdWrap.classList.add('hidden');kbdClose.classList.add('hidden')};clr.onclick=()=>{cfg.ur='';upd()};
+document.addEventListener('click',e=>{if(e.target.dataset.k!==undefined){const k=e.target.dataset.k;cfg.ur=k==='⌫'?cfg.ur.slice(0,-1):(cfg.ur+k).toUpperCase().slice(0,12);upd()}});
+render();upd();renderKeys();
+</script>
+</body></html>
