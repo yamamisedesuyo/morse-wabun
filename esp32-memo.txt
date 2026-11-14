@@ -1,0 +1,37 @@
+購入商品
+https://ja.aliexpress.com/item/1005010399042230.html?spm=a2g0o.order_list.order_list_main.29.4b99585aznIGoA&gatewayAdapt=glo2jpn
+
+基盤no
+ESP32-2432S028R 
+
+概要
+report
+互換性:ESP32
+アクセサリの種類:LCD スクリーン
+ブランド名:SHCHV
+原産地:中国本土
+CPU:低電力デュアルコア32ビットCPU
+メイン周波数：最大240MHz（演算能力は最大600DMIPS）
+SRAM: 内蔵 520 KB SRAM
+特徴1:UART/SPI/I2C/PWM/ADC/DACおよびその他のインターフェースをサポート
+特徴2: OV2640およびOV7670カメラをサポート、内蔵フラッシュ
+特徴3:画像WiFIアップロードをサポート
+TFカード：最大4GBをサポート
+特徴4:組み込みLwipとFreeRTOS
+特徴5: STA/AP/STA+AP動作モードをサポート
+特徴6:Smart Config/AirKissワンクリックネットワーク構成をサポート
+特徴7:二次開発をサポート
+動作電圧:4.75-5.25V
+SPIFlash:デフォルト 32Mbit
+Wi-Fi:802.11b/g/n/e/i
+BT:Bluetooth 互換 4.2BR/EDR および BLE 規格
+インターフェース(2Mbps):UART、SPI、I2C、PWM
+ケース:アクリルケース
+
+ESP32 開発ボード、標準 2.8 インチ TFT スクリーンと抵抗器 TP、ワンキー自動ダウンロードをサポート、LVGL デモと Arduino サンプルを提供
+
+ESP32-2432S028R ダウンロードリンク：http://pan.jczn1688.com/1/ESP32%20module
+
+
+
+
