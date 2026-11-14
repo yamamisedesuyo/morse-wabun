@@ -33,5 +33,376 @@ ESP32 開発ボード、標準 2.8 インチ TFT スクリーンと抵抗器 TP�
 ESP32-2432S028R ダウンロードリンク：http://pan.jczn1688.com/1/ESP32%20module
 
 
+------------------------------------------------------------------------------------------------------------------------
+2026/11/14 19:33時点　正常動作
+MorseKeyer_V1_35_Edit.ino
+------------------------------------------------------------------------------------------------------------------------
+
+#define LGFX_USE_V1
+#include <LovyanGFX.hpp>
+#include <Preferences.h>
+
+class LGFX_CYD : public lgfx::LGFX_Device {
+  lgfx::Panel_ILI9341 _panel;
+  lgfx::Bus_SPI _bus;
+  lgfx::Light_PWM _light;
+  lgfx::Touch_XPT2046 _touch;
+public:
+  LGFX_CYD(){
+    { auto cfg=_bus.config(); cfg.spi_host=SPI2_HOST; cfg.spi_mode=0; cfg.freq_write=20000000; cfg.freq_read=8000000; cfg.spi_3wire=false; cfg.use_lock=true; cfg.dma_channel=0; cfg.pin_sclk=14; cfg.pin_mosi=13; cfg.pin_miso=12; cfg.pin_dc=2; _bus.config(cfg); _panel.setBus(&_bus); }
+    { auto cfg=_panel.config(); cfg.pin_cs=15; cfg.pin_rst=4; cfg.pin_busy=-1;
+      cfg.memory_width=320; cfg.memory_height=240;
+      cfg.panel_width=320;  cfg.panel_height=240;
+      cfg.offset_x=0; cfg.offset_y=0; cfg.offset_rotation=0;
+      cfg.dummy_read_pixel=8; cfg.dummy_read_bits=1; cfg.readable=true;
+      cfg.invert=false; cfg.rgb_order=false; cfg.dlen_16bit=false; cfg.bus_shared=true; _panel.config(cfg); }
+    { auto cfg=_light.config(); cfg.pin_bl=21; cfg.invert=false; cfg.freq=44100; cfg.pwm_channel=7; _light.config(cfg); _panel.setLight(&_light); }
+    { auto cfg=_touch.config();
+      cfg.x_min=200; cfg.x_max=3800;
+      cfg.y_min=200; cfg.y_max=3800;
+      cfg.pin_cs=33;
+      cfg.pin_int=-1;
+      cfg.bus_shared=true;
+      cfg.offset_rotation=3;
+      cfg.spi_host=SPI3_HOST;
+      cfg.freq=1000000;
+      cfg.pin_sclk=25;
+      cfg.pin_mosi=32;
+      cfg.pin_miso=39;
+      _touch.config(cfg);
+      _panel.setTouch(&_touch);
+    }
+    setPanel(&_panel);
+  }
+};
+LGFX_CYD tft;
+Preferences prefs;
+
+const int PIN_DOT=27, PIN_DASH=22, PIN_KEY=17, PIN_TONE=26;
+const char* CHAR_ORDER = "_/?=0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+int charToIdx(char c){
+  if(c==' ') return 0;
+  if(c=='/') return 1;
+  if(c=='?') return 2;
+  if(c=='=') return 3;
+  if(c>='0' && c<='9') return 4 + (c-'0');
+  if(c>='A' && c<='Z') return 14 + (c-'A');
+  if(c>='a' && c<='z') return 14 + (c-'a');
+  return 0;
+}
+
+String msgs[4] = {"CQ CQ CQ DE JS6UWQ JCC4713 PSE K","UR RST 599 5NN BK","73 TU E E","TU E E"};
+int wpm=20;
+bool isPlaying=false;
+int playingIdx=-1;
+unsigned long lastTouch=0;
+bool editing=false;
+bool showingHelp=false;
+int editIdx=0;
+String editMsg="";
+int editPos=0;
+int pickerIdx=0;
+bool insertMode=true;
+
+int dotLen(){ return 1200 / wpm; }
+void keyOn(){ digitalWrite(PIN_KEY,HIGH); ledcWriteTone(PIN_TONE,700); }
+void keyOff(){ digitalWrite(PIN_KEY,LOW); ledcWriteTone(PIN_TONE,0); }
+
+bool checkStopTouch(){
+  if(playingIdx<0) return false;
+  uint16_t tx,ty;
+  if(!tft.getTouch(&tx,&ty)) return false;
+  int W=tft.width(), H=tft.height();
+  int y0=24;
+  int bh=(H-y0-4)/4 - 2;
+  int y = y0 + playingIdx*(bh+2);
+  if(tx>=W-84 && tx<=W-2 && ty>=y && ty < y+bh) return true;
+  return false;
+}
+bool waitMs(int ms){
+  unsigned long s=millis();
+  while(millis()-s < (unsigned)ms){
+    if(checkStopTouch()) return true;
+    delay(5);
+  }
+  return false;
+}
+bool sendDot(){
+  keyOn();
+  if(waitMs(dotLen())){ keyOff(); return true; }
+  keyOff();
+  if(waitMs(dotLen())) return true;
+  return false;
+}
+bool sendDash(){
+  keyOn();
+  if(waitMs(dotLen()*3)){ keyOff(); return true; }
+  keyOff();
+  if(waitMs(dotLen())) return true;
+  return false;
+}
+bool sendChar(char c){
+  c=toupper(c);
+  if(c==' '){ if(waitMs(dotLen()*4)) return true; return false; }
+  if(c=='='){ if(sendDash()) return true; if(sendDot()) return true; if(sendDot()) return true; if(sendDot()) return true; if(sendDash()) return true; if(waitMs(dotLen()*2)) return true; return false; }
+  if(c=='/'){ if(sendDash()) return true; if(sendDot()) return true; if(sendDot()) return true; if(sendDash()) return true; if(sendDot()) return true; if(waitMs(dotLen()*2)) return true; return false; }
+  if(c=='?'){ if(sendDot()) return true; if(sendDot()) return true; if(sendDash()) return true; if(sendDash()) return true; if(sendDot()) return true; if(sendDot()) return true; if(waitMs(dotLen()*2)) return true; return false; }
+  const char* table[]={".-","-...","-.-.","-..",".","..-.","--.","....","..",".---","-.-",".-..","--","-.","---",".--.","--.-",".-.","...","-","..-","...-",".--","-..-","-.--","--..","-----",".----","..---","...--","....-",".....","-....","--...","---..","----."};
+  const char* chars="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  const char* p=strchr(chars,c); if(!p) return false;
+  const char* code=table[p-chars];
+  for(int i=0;code[i];i++){ if(code[i]=='.'){ if(sendDot()) return true; } else { if(sendDash()) return true; } }
+  if(waitMs(dotLen()*2)) return true;
+  return false;
+}
+void sendMsg(int idx){
+  String s = msgs[idx];
+  playingIdx=idx;
+  isPlaying=true; drawScreen();
+  for(unsigned int i=0;i<s.length();i++){
+    if(digitalRead(PIN_DOT)==LOW || digitalRead(PIN_DASH)==LOW){ break; }
+    if(sendChar(s[i])){ break; }
+    if(checkStopTouch()){ break; }
+  }
+  keyOff(); isPlaying=false; playingIdx=-1; drawScreen();
+  uint16_t tx,ty;
+  while(tft.getTouch(&tx,&ty)) delay(10);
+  lastTouch=millis();
+}
+
+void drawScreen(){
+  tft.setFont(&fonts::Font0);
+  int W=tft.width(), H=tft.height();
+  tft.fillScreen(TFT_BLACK);
+  tft.fillRect(0,0,W,22,TFT_NAVY);
+  tft.setTextColor(TFT_WHITE,TFT_NAVY); tft.setTextSize(2); tft.setCursor(4,3);
+  tft.printf("WPM %d",wpm);
+  tft.fillRect(86,1,26,20,TFT_DARKGREY); tft.setTextColor(TFT_WHITE,TFT_DARKGREY); tft.setCursor(92,4); tft.print("-");
+  tft.fillRect(118,1,26,20,TFT_DARKGREY); tft.setCursor(124,4); tft.print("+");
+  tft.fillRect(188,1,50,20,TFT_DARKGREY); tft.setTextColor(TFT_WHITE,TFT_DARKGREY); tft.setCursor(195,4); tft.print("HLP");
+  if(isPlaying){ tft.setTextColor(TFT_YELLOW,TFT_NAVY); tft.setCursor(60,3); tft.print("SND"); }
+  int y0=24;
+  int bh=(H-y0-4)/4 - 2;
+  for(int i=0;i<4;i++){
+    int y=y0+i*(bh+2);
+    tft.fillRoundRect(2,y,W-88,bh,6,tft.color565(200,200,220));
+    tft.setTextColor(TFT_BLACK); tft.setTextSize(1); tft.setCursor(6,y+4);
+    tft.printf("M%d",i+1);
+    String s=msgs[i];
+    for(int line=0; line<3; line++){
+      int start=line*22;
+      if(start >= (int)s.length()) break;
+      String part=s.substring(start, min(start+22, (int)s.length()));
+      tft.setCursor(6, y+16+line*11);
+      tft.print(part);
+    }
+    bool nowPlaying = (isPlaying && i==playingIdx);
+    uint16_t playCol = nowPlaying ? TFT_RED : TFT_DARKGREEN;
+    tft.fillRoundRect(W-84,y,82,bh,6,playCol);
+    tft.setTextColor(TFT_WHITE,playCol); tft.setTextSize(2);
+    String label = nowPlaying ? "STOP" : "PLAY";
+    int tw=tft.textWidth(label); tft.setCursor(W-84+(82-tw)/2, y+bh/2-8); tft.print(label);
+  }
+  tft.setTextColor(TFT_WHITE,TFT_BLACK); tft.setTextSize(1); tft.setCursor(2,H-10);
+  tft.print(isPlaying?"SENDING... STOP TO ABORT":"HOLD LEFT=EDIT  PLAY=SEND");
+}
+
+void drawHelpScreen(){
+  tft.setFont(&fonts::lgfxJapanGothicP_16);
+  int W=tft.width();
+  tft.fillScreen(TFT_BLACK);
+  tft.fillRect(0,0,W,22,TFT_NAVY);
+  tft.setTextColor(TFT_WHITE,TFT_BLACK); tft.setTextSize(1);
+  const char* lines[] = {
+    "WPM - + 速度を変更",
+    "PLAY メモリー送信",
+    "送信中 STOP で停止",
+    "送信文を1秒長押し 編集",
+    "▲▼ 文字を変更",
+    "<> カーソル移動",
+    "ADD 文字を追加",
+    "DEL 1文字消す",
+    "A_CLR 全部消す",
+    "CAN 保存せず戻る",
+    "OK 保存"
+  };
+  for(int i=0;i<11;i++){
+    tft.setCursor(6, 28 + i*22);
+    tft.print(lines[i]);
+  }
+  tft.setFont(&fonts::Font0);
+  tft.fillRoundRect(82,268,76,30,6,TFT_BLUE);
+  tft.setTextColor(TFT_WHITE,TFT_BLUE); tft.setTextSize(2); tft.setCursor(100,274); tft.print("OK");
+  tft.setTextColor(TFT_WHITE,TFT_BLACK); tft.setTextSize(1); tft.setCursor(2,302); tft.print("OK=TOPに戻る");
+}
+
+void drawEditScreen(){
+  tft.setFont(&fonts::Font0);
+  int W=tft.width();
+  tft.fillScreen(TFT_BLACK);
+  tft.fillRect(0,0,W,22,TFT_NAVY);
+  tft.setTextColor(TFT_WHITE,TFT_NAVY); tft.setTextSize(2); tft.setCursor(4,3);
+  tft.printf("EDIT M%d",editIdx+1);
+  tft.setCursor(W/2-10,3); tft.print(insertMode?"INS":"OVR");
+  tft.fillRect(W-52,1,50,20,TFT_YELLOW); tft.setTextColor(TFT_BLACK,TFT_YELLOW); tft.setTextSize(2); tft.setCursor(W-46,4); tft.print("CAN");
+  tft.fillRoundRect(2,24,W-4,70,6,TFT_WHITE);
+  tft.setTextSize(2);
+  int perLine=18;
+  for(int i=0;i<=(int)editMsg.length();i++){
+    int line=i/perLine;
+    int col=i%perLine;
+    if(line>=3) break;
+    int x=6+col*12;
+    int y=28+line*16;
+    char c = (i<(int)editMsg.length()) ? editMsg[i] : ' ';
+    if(i==editPos){ tft.setTextColor(TFT_WHITE,TFT_BLACK); }
+    else { tft.setTextColor(TFT_BLACK,TFT_WHITE); }
+    tft.setCursor(x,y);
+    tft.print(c);
+  }
+  tft.fillRoundRect(60,100,120,38,6,TFT_DARKGREY);
+  tft.fillTriangle(120,107,100,132,140,132,TFT_WHITE);
+  tft.fillRoundRect(2,143,56,42,6,TFT_DARKGREY);
+  tft.setTextColor(TFT_WHITE,TFT_DARKGREY); tft.setTextSize(2); tft.setCursor(22,155); tft.print("<");
+  tft.fillRoundRect(60,143,120,42,6,TFT_WHITE);
+  tft.setTextColor(TFT_BLACK,TFT_WHITE); tft.setTextSize(4);
+  char dc = (pickerIdx==0 ? '_' : CHAR_ORDER[pickerIdx]);
+  tft.setCursor(108,150); tft.print(dc);
+  tft.setTextColor(TFT_BLACK,TFT_WHITE); tft.setTextSize(1); tft.setCursor(70,148);
+  tft.print("SEL");
+  tft.fillRoundRect(182,143,56,42,6,TFT_DARKGREY);
+  tft.setTextColor(TFT_WHITE,TFT_DARKGREY); tft.setTextSize(2); tft.setCursor(202,155); tft.print(">");
+  tft.fillRoundRect(60,190,120,38,6,TFT_DARKGREY);
+  tft.fillTriangle(120,221,100,196,140,196,TFT_WHITE);
+  tft.fillRoundRect(2,232,116,30,6, insertMode?TFT_DARKGREEN:TFT_DARKGREY); tft.setTextColor(TFT_WHITE,TFT_DARKGREEN); tft.setTextSize(1); tft.setCursor(42,242); tft.print(insertMode?"INS":"OVR");
+  tft.fillRoundRect(122,232,116,30,6,TFT_DARKGREY); tft.setTextColor(TFT_WHITE,TFT_DARKGREY); tft.setCursor(168,242); tft.print("DEL");
+  tft.fillRoundRect(2,268,76,30,6,TFT_DARKGREEN); tft.setTextColor(TFT_WHITE,TFT_DARKGREEN); tft.setTextSize(2); tft.setCursor(14,274); tft.print("ADD");
+  tft.fillRoundRect(82,268,76,30,6,TFT_BLUE); tft.setTextColor(TFT_WHITE,TFT_BLUE); tft.setCursor(100,274); tft.print("OK");
+  tft.fillRoundRect(162,268,76,30,6,TFT_RED); tft.setTextColor(TFT_WHITE,TFT_RED); tft.setTextSize(2); tft.setCursor(170,274); tft.print("A_CLR");
+  tft.setTextColor(TFT_WHITE,TFT_BLACK); tft.setTextSize(1); tft.setCursor(2,302); tft.print("A_CLR=THIS M ALL CLR  OK=SAVE");
+}
+
+void enterEdit(int idx){
+  editing=true; editIdx=idx; editMsg=msgs[idx]; editPos=0;
+  if(editMsg.length()>0) pickerIdx=charToIdx(editMsg[0]); else pickerIdx=0;
+  insertMode=true;
+  drawEditScreen();
+}
+
+void handleEditTouch(uint16_t tx, uint16_t ty){
+  if(ty<22 && tx>=188){ editing=false; drawScreen(); return; }
+  if(tx>=60 && tx<=180 && ty>=100 && ty<=138){ pickerIdx=(pickerIdx+39)%40; drawEditScreen(); return; }
+  if(tx>=60 && tx<=180 && ty>=190 && ty<=228){ pickerIdx=(pickerIdx+1)%40; drawEditScreen(); return; }
+  if(tx>=2 && tx<=58 && ty>=143 && ty<=185){ if(editPos>0) editPos--; if(editPos<(int)editMsg.length()) pickerIdx=charToIdx(editMsg[editPos]); drawEditScreen(); return; }
+  if(tx>=182 && tx<=238 && ty>=143 && ty<=185){ if(editPos<(int)editMsg.length()) editPos++; if(editPos<(int)editMsg.length()) pickerIdx=charToIdx(editMsg[editPos]); drawEditScreen(); return; }
+  if(ty>=232 && ty<=262 && tx>=2 && tx<=118){ insertMode=!insertMode; drawEditScreen(); return; }
+  if(ty>=232 && ty<=262 && tx>=122 && tx<=238){
+    if(editMsg.length()>0){
+      if(editPos<(int)editMsg.length()){ editMsg.remove(editPos,1); }
+      else { editMsg.remove(editPos-1,1); editPos--; if(editPos<0) editPos=0; }
+    }
+    drawEditScreen(); return;
+  }
+  if(ty>=268 && ty<=298 && tx>=2 && tx<=78){
+    char c = (pickerIdx==0 ? ' ' : CHAR_ORDER[pickerIdx]);
+    if(insertMode){
+      editMsg = editMsg.substring(0,editPos) + String(c) + editMsg.substring(editPos);
+      editPos++;
+    } else {
+      if(editPos<(int)editMsg.length()){ editMsg.setCharAt(editPos,c); editPos++; }
+      else { editMsg += String(c); editPos++; }
+    }
+    drawEditScreen(); return;
+  }
+  if(ty>=268 && ty<=298 && tx>=82 && tx<=158){
+    msgs[editIdx]=editMsg;
+    prefs.putString(("m"+String(editIdx)).c_str(), editMsg);
+    editing=false; drawScreen(); return;
+  }
+  if(ty>=268 && ty<=298 && tx>=162 && tx<=238){
+    editMsg="";
+    editPos=0;
+    pickerIdx=0;
+    drawEditScreen(); return;
+  }
+}
+
+void setup(){
+  Serial.begin(115200);
+  pinMode(PIN_DOT,INPUT_PULLUP); pinMode(PIN_DASH,INPUT_PULLUP);
+  pinMode(PIN_KEY,OUTPUT); digitalWrite(PIN_KEY,LOW);
+  ledcAttach(PIN_TONE,700,8); ledcWriteTone(PIN_TONE,0);
+  prefs.begin("keyer",false);
+  wpm=prefs.getInt("wpm",20);
+  int ver=prefs.getInt("ver",0);
+  if(ver<2){
+    msgs[0]="CQ CQ CQ DE JS6UWQ JCC4713 PSE K";
+    msgs[1]="UR RST 599 5NN BK";
+    msgs[2]="73 TU E E";
+    msgs[3]="TU E E";
+    for(int i=0;i<4;i++) prefs.putString(("m"+String(i)).c_str(), msgs[i]);
+    prefs.putInt("ver",2);
+  } else {
+    for(int i=0;i<4;i++){ String k="m"+String(i); String v=prefs.getString(k.c_str(),""); if(v.length()) msgs[i]=v; }
+  }
+  tft.init(); tft.setBrightness(200);
+  tft.setRotation(5);
+  Serial.printf("W=%d H=%d ROT5 Touch OFFS=3\n", tft.width(), tft.height());
+  drawScreen();
+}
+
+void loop(){
+  uint16_t tx,ty;
+  if(tft.getTouch(&tx,&ty) && millis()-lastTouch>300){
+    lastTouch=millis();
+    if(showingHelp){
+      if(ty>=268 && ty<=298 && tx>=82 && tx<=158){
+        showingHelp=false; drawScreen();
+      }
+      return;
+    }
+    if(editing){ handleEditTouch(tx,ty); return; }
+    Serial.printf("TOUCH x=%d y=%d\n", tx, ty);
+    tft.fillCircle(tx,ty,4,TFT_WHITE);
+    int W=tft.width(), H=tft.height();
+    if(ty<22){
+      if(tx>=86 && tx<=112){ wpm=max(5,wpm-1); prefs.putInt("wpm",wpm); drawScreen(); }
+      if(tx>=118 && tx<=144){ wpm=min(50,wpm+1); prefs.putInt("wpm",wpm); drawScreen(); }
+      if(tx>=188 && tx<=238){ showingHelp=true; drawHelpScreen(); }
+    } else {
+      int y0=24; int bh=(H-y0-4)/4 - 2;
+      for(int i=0;i<4;i++){
+        int y=y0+i*(bh+2);
+        if(ty>=y && ty<y+bh){
+          if(tx>W-84){ sendMsg(i); }
+          else {
+            tft.setTextColor(TFT_YELLOW,TFT_BLACK); tft.setTextSize(1); tft.setCursor(2,H-10);
+            tft.print("HOLD 1s FOR EDIT...");
+            unsigned long start=millis();
+            bool held=true;
+            while(millis()-start<1000){
+              uint16_t hx,hy;
+              if(!tft.getTouch(&hx,&hy)){ held=false; break; }
+              delay(10);
+            }
+            if(held){
+              enterEdit(i);
+              while(tft.getTouch(&tx,&ty)) delay(10);
+            } else {
+              drawScreen();
+            }
+            lastTouch=millis();
+          }
+          break;
+        }
+      }
+    }
+  }
+  if(!isPlaying && !editing && !showingHelp){
+    if(digitalRead(PIN_DOT)==LOW){ keyOn(); while(digitalRead(PIN_DOT)==LOW) delay(1); keyOff(); delay(dotLen()); }
+    if(digitalRead(PIN_DASH)==LOW){ keyOn(); delay(dotLen()*3); keyOff(); delay(dotLen()); }
+  }
+}
+
 
 
